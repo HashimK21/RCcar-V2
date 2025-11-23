@@ -1,6 +1,6 @@
 clear
 clc
-pkg load parallel
+% pkg load parallel
 
 %global constants
 tw = 220; %track width
@@ -48,7 +48,7 @@ for i = 1:numel(set1)
     %z1 = 40;
     thetaWheel_vals = zeros(1, num_theta);
     xr_vals =  zeros(1, num_theta);
-    parfor p = 1:numel(theta_vals)
+    for p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
         %thetaS = 0;
         %finding rack displacement
@@ -151,12 +151,12 @@ disp('Created Headers')
 
 %Write header + data
 fid = fopen('steering.csv', 'w');
-fprintf(fid, '%s,', headers{1:end-1});
-fprintf(fid, '%s\n', headers{end});
-fclose(fid);
+header_line = strjoin(headers, ',');
+fprintf(fid, '%s\n', header_line);
 
 %Append the matrix
 dlmwrite('steering.csv', output, '-append');
+fclose(fid);
 
 disp('Print to CSV')
 
@@ -184,13 +184,13 @@ headers_test = ["h", "s", "t", "z1", "r/2", test_headers];
 disp('Created Test Headers')
 
 %Write header + data
-fid = fopen('xr_test', 'w');
+fid = fopen('xr_test.csv', 'w');
 fprintf(fid, '%s,', headers_test{1:end-1});
 fprintf(fid, '%s\n', headers_test{end});
-fclose(fid);
 
 %Append test matrix
 dlmwrite('xr_test.csv', test, '-append');
+fclose(fid);
 
 disp('Print Test to CSV')
 
