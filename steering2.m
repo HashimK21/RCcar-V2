@@ -98,6 +98,7 @@ disp('finished calculations')
 [newRows, newCols] = size(output);
 tempMatrix2 = zeros(newRows, newCols);
 validRowCount2 = 0;
+validIndices = false(newRows, 1); % Track valid rows
 
 [~, idxZero] = min(abs(theta_vals - 0)); % location of thetaS = 0
 thetaIndex = num_val + idxZero; % the correct column in output
@@ -114,10 +115,12 @@ for rowIndex = 1:newRows
     if cond_theta0_under_1 && cond_theta0_over_0 && cond_thetaLast_neg
        validRowCount2 = validRowCount2 + 1;
        tempMatrix2(validRowCount2, :) = currentRow;
+       validIndices(rowIndex) = true; % Mark as valid
     end
 end
 
-output = tempMatrix2(1:validRowCount2, :);
+output_final = tempMatrix2(1:validRowCount2, :);
+test_final = test(validIndices, :); % Filter test matrix using validIndices
 
 disp('Completed Purge')
 
@@ -135,11 +138,11 @@ header_line = strjoin(headers, ',');
 fprintf(fid, '%s\n', header_line);
 
 % -- write matrix --
-[rows, cols] = size(output);
+[rows, cols] = size(output_final);
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
-        fprintf(fid, fmt, output(r, :));
+        fprintf(fid, fmt, output_final(r, :));
     end
 end
 fclose(fid);
@@ -147,19 +150,6 @@ fclose(fid);
 disp('Print to CSV')
 
 % -- test cases --
-[numRows_test, numCols_test] = size(test);
-tempMatrix_test = zeros(numRows_test, numCols_test);  % temporary storage
-validRowCount_test = 0;
-
-for rowIndex_test = 1:numRows_test
-    if all(imag(test(rowIndex_test, :)) == 0)   % row has only real numbers
-        validRowCount_test = validRowCount_test + 1;
-        tempMatrix_test(validRowCount_test, :) = test(rowIndex_test, :);
-    end
-end
-
-test = tempMatrix_test(1:validRowCount_test, :);
-
 % -- Build header row for tests --
 test_headers = cell(1, num_theta);
     for g_test = 1:num_theta
@@ -174,11 +164,11 @@ header_line_test = strjoin(headers_test, ',');
 fprintf(fid, '%s\n', header_line_test);
 
 % -- write test matrix --
-[rowsT, colsT] = size(test);
+[rowsT, colsT] = size(test_final);
 if rowsT > 0
     fmtT = [repmat('%g,', 1, colsT-1) '%g\n'];
     for r = 1:rowsT
-        fprintf(fid, fmtT, test(r, :));
+        fprintf(fid, fmtT, test_final(r, :));
     end
 end
 fclose(fid);
