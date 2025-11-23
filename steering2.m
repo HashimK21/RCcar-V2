@@ -1,6 +1,6 @@
 clear
 clc
-% pkg load parallel
+pkg load parallel
 
 %global constants
 tw = 220; %track width
@@ -48,7 +48,7 @@ for i = 1:numel(set1)
     %z1 = 40;
     thetaWheel_vals = zeros(1, num_theta);
     xr_vals =  zeros(1, num_theta);
-    for p = 1:numel(theta_vals)
+    parfor p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
         %thetaS = 0;
         %finding rack displacement
