@@ -149,13 +149,18 @@ headers = ["h", "s", "t", "z1", "r/2", thetaWheel_headers];
 
 disp('Created Headers')
 
-%Write header + data
 fid = fopen('steering.csv', 'w');
 header_line = strjoin(headers, ',');
 fprintf(fid, '%s\n', header_line);
 
-%Append the matrix
-dlmwrite('steering.csv', output, '-append');
+% Write numeric matrix (compatible with Octave)
+[rows, cols] = size(output);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid, fmt, output(r, :));
+    end
+end
 fclose(fid);
 
 disp('Print to CSV')
@@ -183,13 +188,18 @@ headers_test = ["h", "s", "t", "z1", "r/2", test_headers];
 
 disp('Created Test Headers')
 
-%Write header + data
 fid = fopen('xr_test.csv', 'w');
-fprintf(fid, '%s,', headers_test{1:end-1});
-fprintf(fid, '%s\n', headers_test{end});
+header_line_test = strjoin(headers_test, ',');
+fprintf(fid, '%s\n', header_line_test);
 
-%Append test matrix
-dlmwrite('xr_test.csv', test, '-append');
+% Write test matrix (compatible with Octave)
+[rowsT, colsT] = size(test);
+if rowsT > 0
+    fmtT = [repmat('%g,', 1, colsT-1) '%g\n'];
+    for r = 1:rowsT
+        fprintf(fid, fmtT, test(r, :));
+    end
+end
 fclose(fid);
 
 disp('Print Test to CSV')
