@@ -94,23 +94,7 @@ end
 
 disp('finished calculations')
 
-%Sort
-[numRows, numCols] = size(output);
-tempMatrix = zeros(numRows, numCols);  % temporary storage
-validRowCount = 0;
-
-for rowIndex = 1:numRows
-    if all(imag(output(rowIndex, :)) == 0)   % row has only real numbers
-        validRowCount = validRowCount + 1;
-        tempMatrix(validRowCount, :) = output(rowIndex, :);
-    end
-end
-
-
-output = tempMatrix(1:validRowCount, :);
-
-%further sort
-
+% -- Sort --
 [newRows, newCols] = size(output);
 tempMatrix2 = zeros(newRows, newCols);
 validRowCount2 = 0;
@@ -123,14 +107,11 @@ for rowIndex = 1:newRows
     currentRow = output(rowIndex, :);
 
     %conditions for acceptance
-    cond_exist_real = isreal(xr);
     cond_theta0_under_1 = currentRow(thetaIndex) < 1;
     cond_theta0_over_0 = currentRow(thetaIndex) > 0;
     cond_thetaLast_neg = currentRow(thetaIndexLast) < 0;
 
-
-
-    if cond_exist_real && cond_theta0_under_1 && cond_theta0_over_0 && cond_thetaLast_neg
+    if cond_theta0_under_1 && cond_theta0_over_0 && cond_thetaLast_neg
        validRowCount2 = validRowCount2 + 1;
        tempMatrix2(validRowCount2, :) = currentRow;
     end
@@ -140,7 +121,7 @@ output = tempMatrix2(1:validRowCount2, :);
 
 disp('Completed Purge')
 
-%Build header row
+% -- Build header row --
 thetaWheel_headers = cell(1, num_theta);
     for g = 1:num_theta
         thetaWheel_headers{g} = ['thetaWheel_' num2str(g)];
@@ -153,7 +134,7 @@ fid = fopen('steering.csv', 'w');
 header_line = strjoin(headers, ',');
 fprintf(fid, '%s\n', header_line);
 
-% Write numeric matrix (compatible with Octave)
+% -- write matrix --
 [rows, cols] = size(output);
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
@@ -165,7 +146,7 @@ fclose(fid);
 
 disp('Print to CSV')
 
-%test cases
+% -- test cases --
 [numRows_test, numCols_test] = size(test);
 tempMatrix_test = zeros(numRows_test, numCols_test);  % temporary storage
 validRowCount_test = 0;
@@ -179,7 +160,7 @@ end
 
 test = tempMatrix_test(1:validRowCount_test, :);
 
-%Build header row for tests
+% -- Build header row for tests --
 test_headers = cell(1, num_theta);
     for g_test = 1:num_theta
         test_headers{g_test} = ['testedVariable_' num2str(g_test)];
@@ -192,7 +173,7 @@ fid = fopen('xr_test.csv', 'w');
 header_line_test = strjoin(headers_test, ',');
 fprintf(fid, '%s\n', header_line_test);
 
-% Write test matrix (compatible with Octave)
+% -- write test matrix --
 [rowsT, colsT] = size(test);
 if rowsT > 0
     fmtT = [repmat('%g,', 1, colsT-1) '%g\n'];
