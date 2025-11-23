@@ -41,13 +41,8 @@ for i = 1:numel(set1)
     rO2 = set4(i);
     z1 = set5(i);
 
-    %h = 40;
-    %s = 20;
-    %t = 80;
-    %rO2 = 40;
-    %z1 = 40;
     thetaWheel_vals = zeros(1, num_theta);
-    xr_vals =  zeros(1, num_theta);
+    test_vals =  zeros(1, num_theta);
     parfor p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
         %thetaS = 0;
@@ -74,7 +69,7 @@ for i = 1:numel(set1)
 
         dom = sqrt(((alpha)^2) + ((beta)^2));
 
-        thetaWheelFromHorz = acos((T./dom)) + atan((beta)./ (alpha));
+        thetaWheelFromHorz = acos((T./dom)) + atan((beta)./(alpha));
 
         thetaWheelRAD = ((pi)/2) - thetaWheelFromHorz;
 
@@ -82,19 +77,19 @@ for i = 1:numel(set1)
         %thetaWheel = thetaWheelFromHorz .* (180/pi);
 
         thetaWheel_vals(p) = thetaWheel;   % store output
-        xr_vals(p) = xr;
+        test_vals(p) = thetaWheelRAD;
 
     end
 
         % One row per case: 5 constants + values for angle dependants
         output(i, :) = [h, s, t, z1, rO2, thetaWheel_vals];
-        test(i, :) = [h, s, t, z1, rO2, xr_vals];
+        test(i, :) = [h, s, t, z1, rO2, test_vals];
 
 end
 
 disp('finished calculations')
 
-% -- Sort --
+% -- Purge bad rows --
 [newRows, newCols] = size(output);
 tempMatrix2 = zeros(newRows, newCols);
 validRowCount2 = 0;
@@ -159,7 +154,7 @@ headers_test = ["h", "s", "t", "z1", "r/2", test_headers];
 
 disp('Created Test Headers')
 
-fid = fopen('xr_test.csv', 'w');
+fid = fopen('test_vals.csv', 'w');
 header_line_test = strjoin(headers_test, ',');
 fprintf(fid, '%s\n', header_line_test);
 
