@@ -16,7 +16,7 @@ set1 = 30:10:70; %values for h, radius of rotation
 set2 = 10:5:30; %values for steering arm, s
 set3 = 50:10:100; %values for tie rod, t
 set4 = 30:5:50; %values for r/2
-set5 = 10:10:100; %values for z1
+set5 = 10:10:100; %values for zr -- rack position in z 
 
 [set1, set2, set3, set4, set5] = ndgrid(set1, set2, set3, set4, set5);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:)];
@@ -39,7 +39,7 @@ for i = 1:numel(set1)
     s = set2(i);
     t = set3(i);
     rO2 = set4(i);
-    z1 = set5(i);
+    zr = set5(i);
 
     thetaWheel_vals = zeros(1, num_theta);
     test_vals =  zeros(1, num_theta);
@@ -59,7 +59,7 @@ for i = 1:numel(set1)
         cz = -(20 + s); %distance to wheel pivot from steering arm tie rod joint, z
 
         dx = xp - xr;
-        dz = zp - z1;
+        dz = zp - zr;
 
         Tnum = (t^2) - ((cx)^2) - ((cz)^2) - ((dx)^2) - ((dz)^2);
         T = Tnum ./ 2; %constant terms of each case
@@ -82,8 +82,8 @@ for i = 1:numel(set1)
     end
 
         % One row per case: 5 constants + values for angle dependants
-        output(i, :) = [h, s, t, z1, rO2, thetaWheel_vals];
-        test(i, :) = [h, s, t, z1, rO2, test_vals];
+        output(i, :) = [h, s, t, zr, rO2, thetaWheel_vals];
+        test(i, :) = [h, s, t, zr, rO2, test_vals];
 
 end
 
@@ -124,7 +124,7 @@ thetaWheel_headers = cell(1, num_theta);
     for g = 1:num_theta
         thetaWheel_headers{g} = ['thetaWheel_' num2str(g)];
     end
-headers = ["h", "s", "t", "z1", "r/2", thetaWheel_headers];
+headers = ["h", "s", "t", "zr", "r/2", thetaWheel_headers];
 
 disp('Created Headers')
 
@@ -150,7 +150,7 @@ test_headers = cell(1, num_theta);
     for g_test = 1:num_theta
         test_headers{g_test} = ['testedVariable_' num2str(g_test)];
     end
-headers_test = ["h", "s", "t", "z1", "r/2", test_headers];
+headers_test = ["h", "s", "t", "zr", "r/2", test_headers];
 
 disp('Created Test Headers')
 
