@@ -69,9 +69,16 @@ for i = 1:numel(set1)
 
         dom = sqrt(((alpha)^2) + ((beta)^2));
 
-        thetaWheelFromHorz = acos((T./dom)) + atan((beta)./(alpha));
-
-        thetaWheelRAD = ((pi)/2) - thetaWheelFromHorz;
+        % safe evaluation of acos argument and correct atan quadrant
+        if dom == 0
+            thetaWheelRAD = NaN;
+        else
+            arg = T ./ dom;
+            arg = min(max(arg, -1), 1);        % clamp to [-1,1]
+            phi = atan2(beta, alpha);          % correct quadrant
+            thetaWheelFromHorz = acos(arg) + phi;
+            thetaWheelRAD = (pi/2) - thetaWheelFromHorz;
+        end
 
         thetaWheel = thetaWheelRAD .* (180/pi);
         %thetaWheel = thetaWheelFromHorz .* (180/pi);
