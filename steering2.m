@@ -29,7 +29,8 @@ num_theta = numel(theta_vals);
 num_val = 5;
 
 % Preallocate output matrix
-output = zeros(num_cases, num_val + num_theta);
+output_pos = zeros(num_cases, num_val + num_theta);
+output_neg = zeros(num_cases, num_val + num_theta);
 test = zeros(num_cases, num_val + num_theta);
 
 disp('created ngrid and output matrix')
@@ -41,7 +42,8 @@ for i = 1:numel(set1)
     rO2 = set4(i);
     zr = set5(i);
 
-    thetaWheel_vals = zeros(1, num_theta);
+    thetaWheel_vals_pos = zeros(1, num_theta);
+    thetaWheel_vals_neg = zeros(1, num_theta);
     test_vals =  zeros(1, num_theta);
     parfor p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
@@ -65,7 +67,7 @@ for i = 1:numel(set1)
         T = Tnum ./ 2; %constant terms of each case
 
         alpha = (dx .* cx) + (dz .* cz);
-        beta = (dz .* cx) + (dx .* cz);
+        beta = (dz .* cx) - (dx .* cz);
 
         dom = sqrt(((alpha)^2) + ((beta)^2));
 
@@ -76,20 +78,22 @@ for i = 1:numel(set1)
             arg = T ./ dom;
             arg = min(max(arg, -1), 1);        % clamp to [-1,1]
             phi = atan2(beta, alpha);          % correct quadrant
-            thetaWheelFromHorz = acos(arg) + phi;
-            thetaWheelRAD = (pi/2) - thetaWheelFromHorz;
+            thetaWheelFromHorz1 = phi + acos(arg);
+            thetaWheelFromHorz2 = phi - acos(arg);
+            thetaWheelRAD1 = (pi/2) - thetaWheelFromHorz1;
+            thetaWheelRAD2 = (pi/2) - thetaWheelFromHorz2;
         end
 
-        thetaWheel = thetaWheelRAD .* (180/pi);
-        %thetaWheel = thetaWheelFromHorz .* (180/pi);
+        thetaWheel_pos = thetaWheelRAD1 .* (180/pi);
+        thetaWheel_neg = thetaWheelRAD2 .* (180/pi);
 
-        thetaWheel_vals(p) = thetaWheel;   % store output
+        thetaWheel_vals_pos(p) = thetaWheel_pos;   % store output
         test_vals(p) = thetaWheelRAD;
 
     end
 
         % One row per case: 5 constants + values for angle dependants
-        output(i, :) = [h, s, t, zr, rO2, thetaWheel_vals];
+        output_pos(i, :) = [h, s, t, zr, rO2, thetaWheel_vals];
         test(i, :) = [h, s, t, zr, rO2, test_vals];
 
 end
