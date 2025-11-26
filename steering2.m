@@ -13,20 +13,22 @@ xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
 set1 = 30:10:70; %values for h, radius of rotation
-set2 = 10:5:30; %values for steering arm, s
-set3 = 50:10:100; %values for tie rod, t
-set4 = 30:5:50; %values for r/2
-set5 = 10:10:100; %values for zr -- rack position in z 
+set2 = 20:5:50; %values for steering arm, s
+set3 = 50:10:150; %values for tie rod, t
+set4 = 40:5:70; %values for r/2
+set5 = 10:10:100; %values for zr -- rack position in z
+set6 = 30:5:50; %values for x offset from pivot to tie rod joint (cx)
+set7 = 20:5:50; %values for z offset from pivot top end of steering arm
 
-[set1, set2, set3, set4, set5] = ndgrid(set1, set2, set3, set4, set5);
-combinations = [set1(:), set2(:), set3(:), set4(:), set5(:)];
+[set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
+combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
 
-%theta_vals = linspace((-pi/4), (pi/4), 90);
-theta_vals = linspace(0, (pi/4), 45);
+%steering angle in radians
+theta_vals = linspace(0, (pi/6), 30);
 
 num_cases = numel(set1);
 num_theta = numel(theta_vals);
-num_val = 5;
+num_val = 7; %number of ngrid variables
 
 % Preallocate output matrix
 output_pos = zeros(num_cases, num_val + num_theta);
@@ -41,6 +43,8 @@ for i = 1:numel(set1)
     t = set3(i);
     rO2 = set4(i);
     zr = set5(i);
+    cxComp = set6(i);
+    czComp = set7(i);
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
@@ -57,8 +61,8 @@ for i = 1:numel(set1)
         xp = xj - k; %x value for wheel pivot
         zp = 0;
 
-        cx = -20; %distance to wheel pivot from steering arm tie rod joint, x
-        cz = -(20 + s); %distance to wheel pivot from steering arm tie rod joint, z
+        cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
+        cz = -(czComp + s); %distance to wheel pivot from steering arm tie rod joint, z
 
         dx = xp - xr;
         dz = zp - zr;
@@ -94,8 +98,8 @@ for i = 1:numel(set1)
     end
 
         % One row per case: 5 constants + values for angle dependants
-        output_pos(i, :) = [h, s, t, zr, rO2, thetaWheel_vals_pos];
-        output_neg(i, :) = [h, s, t, zr, rO2, thetaWheel_vals_neg];
+        output_pos(i, :) = [h, s, t, zr, rO2, cx, cz, thetaWheel_vals_pos];
+        output_neg(i, :) = [h, s, t, zr, rO2, cx, cz, thetaWheel_vals_neg];
         %test(i, :) = [h, s, t, zr, rO2, test_vals];
 
 end
