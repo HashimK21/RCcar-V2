@@ -57,7 +57,7 @@ for i = 1:numel(set1)
         xp = xj - k; %x value for wheel pivot
         zp = 0;
 
-        cx = 15; %distance to wheel pivot from steering arm tie rod joint, x
+        cx = -20; %distance to wheel pivot from steering arm tie rod joint, x
         cz = -(20 + s); %distance to wheel pivot from steering arm tie rod joint, z
 
         dx = xp - xr;
@@ -69,13 +69,13 @@ for i = 1:numel(set1)
         alpha = (dx .* cx) + (dz .* cz);
         beta = (dz .* cx) - (dx .* cz);
 
-        dom = sqrt(((alpha)^2) + ((beta)^2));
+        R = sqrt(((alpha)^2) + ((beta)^2));
 
         % safe evaluation of acos argument and correct atan quadrant
-        if dom == 0
+        if R == 0
             thetaWheelRAD = NaN;
         else
-            arg = T ./ dom;
+            arg = T ./ R;
             arg = min(max(arg, -1), 1);        % clamp to [-1,1]
             phi = atan2(beta, alpha);          % correct quadrant
             thetaWheelFromHorz1 = phi + acos(arg);
@@ -131,7 +131,7 @@ for rowIndex = 1:maxRows
         cond_theta0_over_0_pos = currentRow_pos(thetaIndex) > 0;
         cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
 
-        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos
+        if cond_theta0_under_1_pos && cond_theta0_over_0_pos %&& cond_thetaLast_neg_pos
             validRowCount = validRowCount + 1;
             tempMatrix(validRowCount, :) = currentRow_pos;
             validIndices(rowIndex) = true; % Mark as valid (pos index)
@@ -147,7 +147,7 @@ for rowIndex = 1:maxRows
         cond_theta0_over_0_neg = currentRow_neg(thetaIndex) > 0;
         cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
 
-        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg
+        if cond_theta0_under_1_neg && cond_theta0_over_0_neg %&& cond_thetaLast_neg_neg
             validRowCount2 = validRowCount2 + 1;
             tempMatrix2(validRowCount2, :) = currentRow_neg;
             validIndices2(rowIndex) = true; % Mark as valid (neg index)
