@@ -119,33 +119,39 @@ validIndices2 = false(Rows_neg, 1);
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 
-for rowIndex_pos = 1:Rows_pos
-    currentRow_pos = output_pos(rowIndex_pos, :);
+% Merge pos/neg purging into a single loop to keep logic centralized.
+maxRows = max(Rows_pos, Rows_neg);
+for rowIndex = 1:maxRows
+    % Handle positive-acos outputs when available
+    if rowIndex <= Rows_pos
+        currentRow_pos = output_pos(rowIndex, :);
 
-    %conditions for acceptance
-    cond_theta0_under_1_pos = currentRow_pos(thetaIndex) < 1;
-    cond_theta0_over_0_pos = currentRow_pos(thetaIndex) > 0;
-    cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
+        % conditions for acceptance (positive branch)
+        cond_theta0_under_1_pos = currentRow_pos(thetaIndex) < 1;
+        cond_theta0_over_0_pos = currentRow_pos(thetaIndex) > 0;
+        cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
 
-    if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos
-       validRowCount = validRowCount + 1;
-       tempMatrix(validRowCount, :) = currentRow_pos;
-       validIndices(rowIndex_pos) = true; % Mark as valid
+        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos
+            validRowCount = validRowCount + 1;
+            tempMatrix(validRowCount, :) = currentRow_pos;
+            validIndices(rowIndex) = true; % Mark as valid (pos index)
+        end
     end
-end
 
-for rowIndex_neg = 1:Rows_neg
-    currentRow_neg = output_neg(rowIndex_neg, :);
+    % Handle negative-acos outputs when available
+    if rowIndex <= Rows_neg
+        currentRow_neg = output_neg(rowIndex, :);
 
-    %conditions for acceptance
-    cond_theta0_under_1_neg = currentRow_neg(thetaIndex) < 1;
-    cond_theta0_over_0_neg = currentRow_neg(thetaIndex) > 0;
-    cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
+        % conditions for acceptance (negative branch)
+        cond_theta0_under_1_neg = currentRow_neg(thetaIndex) < 1;
+        cond_theta0_over_0_neg = currentRow_neg(thetaIndex) > 0;
+        cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
 
-    if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg
-       validRowCount2 = validRowCount2 + 1;
-       tempMatrix2(validRowCount2, :) = currentRow_neg;
-       validIndices2(rowIndex_neg) = true; % Mark as valid
+        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg
+            validRowCount2 = validRowCount2 + 1;
+            tempMatrix2(validRowCount2, :) = currentRow_neg;
+            validIndices2(rowIndex) = true; % Mark as valid (neg index)
+        end
     end
 end
 
