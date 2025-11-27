@@ -125,17 +125,23 @@ thetaIndexLast = num_val + num_theta;
 
 % Merge pos/neg purging into a single loop to keep logic centralized.
 maxRows = max(Rows_pos, Rows_neg);
+max_jump = 6; % Max allowable jump between thetaWheel values in degrees
 for rowIndex = 1:maxRows
     % Handle positive-acos outputs when available
     if rowIndex <= Rows_pos
         currentRow_pos = output_pos(rowIndex, :);
 
+        % Check for large jumps in thetaWheel values
+        thetaWheel_pos_values = currentRow_pos(num_val+1:end);
+        diff_pos = diff(thetaWheel_pos_values);
+        
         % conditions for acceptance (positive branch)
         cond_theta0_under_1_pos = abs(currentRow_pos(thetaIndex)) < 1;
         cond_theta0_over_0_pos = abs(currentRow_pos(thetaIndex)) > 0;
         cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
+        cond_no_large_jumps_pos = all(abs(diff_pos) < max_jump);
 
-        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos
+        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos && cond_no_large_jumps_pos
             validRowCount = validRowCount + 1;
             tempMatrix(validRowCount, :) = currentRow_pos;
             validIndices(rowIndex) = true; % Mark as valid (pos index)
@@ -146,12 +152,18 @@ for rowIndex = 1:maxRows
     if rowIndex <= Rows_neg
         currentRow_neg = output_neg(rowIndex, :);
 
+        % Check for large jumps in thetaWheel values
+        thetaWheel_neg_values = currentRow_neg(num_val+1:end);
+        diff_neg = diff(thetaWheel_neg_values);
+        
+
         % conditions for acceptance (negative branch)
         cond_theta0_under_1_neg = abs(currentRow_neg(thetaIndex)) < 1;
         cond_theta0_over_0_neg = abs(currentRow_neg(thetaIndex)) > 0;
         cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
+        cond_no_large_jumps_neg = all(abs(diff_neg) < max_jump);
 
-        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg
+        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg && cond_no_large_jumps_neg
             validRowCount2 = validRowCount2 + 1;
             tempMatrix2(validRowCount2, :) = currentRow_neg;
             validIndices2(rowIndex) = true; % Mark as valid (neg index)
