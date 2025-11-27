@@ -15,10 +15,10 @@ xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 set1 = 30:10:70; %values for h, radius of rotation
 set2 = 20:5:50; %values for steering arm, s
 set3 = 50:10:150; %values for tie rod, t
-set4 = 40:5:70; %values for r/2
-set5 = 10:10:100; %values for zr -- rack position in z
-set6 = 30:5:50; %values for x offset from pivot to tie rod joint (cx)
-set7 = 20:5:50; %values for z offset from pivot top end of steering arm
+set4 = 30:5:60; %values for r/2
+set5 = 30:10:100; %values for zr -- rack position in z
+set6 = 10:10:50; %values for x offset from pivot to tie rod joint (cx)
+set7 = 20:2.5:30; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
@@ -131,11 +131,11 @@ for rowIndex = 1:maxRows
         currentRow_pos = output_pos(rowIndex, :);
 
         % conditions for acceptance (positive branch)
-        cond_theta0_under_1_pos = currentRow_pos(thetaIndex) < 1;
-        cond_theta0_over_0_pos = currentRow_pos(thetaIndex) > 0;
+        cond_theta0_under_1_pos = abs(currentRow_pos(thetaIndex)) < 1;
+        cond_theta0_over_0_pos = abs(currentRow_pos(thetaIndex)) > 0;
         cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
 
-        if cond_theta0_under_1_pos && cond_theta0_over_0_pos %&& cond_thetaLast_neg_pos
+        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos
             validRowCount = validRowCount + 1;
             tempMatrix(validRowCount, :) = currentRow_pos;
             validIndices(rowIndex) = true; % Mark as valid (pos index)
@@ -147,11 +147,11 @@ for rowIndex = 1:maxRows
         currentRow_neg = output_neg(rowIndex, :);
 
         % conditions for acceptance (negative branch)
-        cond_theta0_under_1_neg = currentRow_neg(thetaIndex) < 1;
-        cond_theta0_over_0_neg = currentRow_neg(thetaIndex) > 0;
+        cond_theta0_under_1_neg = abs(currentRow_neg(thetaIndex)) < 1;
+        cond_theta0_over_0_neg = abs(currentRow_neg(thetaIndex)) > 0;
         cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
 
-        if cond_theta0_under_1_neg && cond_theta0_over_0_neg %&& cond_thetaLast_neg_neg
+        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg
             validRowCount2 = validRowCount2 + 1;
             tempMatrix2(validRowCount2, :) = currentRow_neg;
             validIndices2(rowIndex) = true; % Mark as valid (neg index)
@@ -170,7 +170,7 @@ thetaWheel_headers = cell(1, num_theta);
     for g = 1:num_theta
         thetaWheel_headers{g} = ['thetaWheel_' num2str(g)];
     end
-headers = ["h", "s", "t", "zr", "r/2", thetaWheel_headers];
+headers = ["h", "s", "t", "zr", "r/2", "cx", "cz", thetaWheel_headers];
 
 disp('Created Headers')
 
