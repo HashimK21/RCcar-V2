@@ -1,2 +1,3 @@
 # TODO
-* add feature here
++ to check incrimintation between wheel angle vs servo angle
+check xr extention amount
