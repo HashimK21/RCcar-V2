@@ -12,19 +12,20 @@ k = -6.93; %offset for KPI mid point projection
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 30:10:70; %values for h, radius of rotation
-set2 = 20:5:50; %values for steering arm, s
-set3 = 50:10:150; %values for tie rod, t
-set4 = 30:5:60; %values for r/2
+set1 = 10:10:70; %values for h, radius of rotation
+set2 = 10:10:50; %values for steering arm, s
+set3 = 40:10:180; %values for tie rod, t
+set4 = 60:5:90; %values for r/2
 set5 = 30:10:100; %values for zr -- rack position in z
-set6 = 10:10:50; %values for x offset from pivot to tie rod joint (cx)
-set7 = 20:2.5:30; %values for z offset from pivot top end of steering arm
+set6 = 10:10:80; %values for x offset from pivot to tie rod joint (cx)
+set7 = 10:10:80; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
 
 %steering angle in radians
-theta_vals = linspace(0, (pi/6), 30);
+theta_vals = linspace(0, 0.4363, 25);
+
 
 num_cases = numel(set1);
 num_theta = numel(theta_vals);
@@ -54,7 +55,6 @@ for i = 1:numel(set1)
         %thetaS = 0;
         %finding rack displacement
         Delx = h .* sin(thetaS);
-
         xr = Delx + rO2;
 
         %Wheel angle
@@ -125,7 +125,7 @@ thetaIndexLast = num_val + num_theta;
 
 % Merge pos/neg purging into a single loop to keep logic centralized.
 maxRows = max(Rows_pos, Rows_neg);
-max_jump = 6; % Max allowable jump between thetaWheel values in degrees
+max_jump = 1.5; % Max allowable jump between thetaWheel values in degrees
 for rowIndex = 1:maxRows
     % Handle positive-acos outputs when available
     if rowIndex <= Rows_pos
