@@ -1,4 +1,3 @@
-clear
 clc
 pkg load parallel
 
@@ -103,77 +102,75 @@ end
 disp('finished calculations')
 
 % -- Purge bad rows --
-[Rows_pos, Cols_pos] = size(output_pos);
-[Rows_neg, Cols_neg] = size(output_neg);
-tempMatrix = zeros(Rows_pos, Cols_pos);
-tempMatrix2 = zeros(Rows_neg, Cols_neg);
-validRowCount = 0;
-validRowCount2 = 0;
-% Track valid rows
-validIndices = false(Rows_pos, 1);
-validIndices2 = false(Rows_neg, 1);
-
-% location of thetaS = 0
+%location of thetaS = 0
 [~, idxZero] = min(abs(theta_vals - 0));
-% the correct column in outputs
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 
-% Merge pos/neg purging into a single loop to keep logic centralized.
-maxRows = max(Rows_pos, Rows_neg);
+%First Pass: Filter based on thetaIndex and thetaIndexLast conditions
+cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < 1) & ...
+                 (abs(output_pos(:, thetaIndex)) > 0) & ...
+                 (output_pos(:, thetaIndexLast) < 0);
+intermediate_pos = output_pos(cond_pos_pass1, :);
+
+cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) < 1) & ...
+                 (abs(output_neg(:, thetaIndex)) > 0) & ...
+                 (output_neg(:, thetaIndexLast) < 0);
+intermediate_neg = output_neg(cond_neg_pass1, :);
+
+disp(['Pass 1 complete. Pos candidates: ', num2str(size(intermediate_pos, 1)), ', Neg candidates: ', num2str(size(intermediate_neg, 1))]);
+
+
+%Second Pass: Filter based on incrementation conditions
 max_jump = 3; % Max allowable jump between thetaWheel values in degrees
 min_theta_inc = 0.01; % Min allowable incrament of the absolute value of thetaWheel values in degrees
-for rowIndex = 1:maxRows
-    % Handle positive-acos outputs when available
-    if rowIndex <= Rows_pos
-        currentRow_pos = output_pos(rowIndex, :);
 
-        % Check for large jumps in thetaWheel values
-        thetaWheel_pos_values = currentRow_pos(num_val+1:end);
-        diff_pos = diff(thetaWheel_pos_values);
-        
-        % conditions for acceptance (positive branch)
-        cond_theta0_under_1_pos = abs(currentRow_pos(thetaIndex)) < 1;
-        cond_theta0_over_0_pos = abs(currentRow_pos(thetaIndex)) > 0;
-        cond_thetaLast_neg_pos = currentRow_pos(thetaIndexLast) < 0;
-        cond_no_large_jumps_pos = all(abs(diff_pos) < max_jump);
-        cond_min_inc = all(diff(abs(thetaWheel_pos_values)) > min_theta_inc);
+% For positive branch
+[Rows_pos, Cols_pos] = size(intermediate_pos);
+tempMatrix = zeros(Rows_pos, Cols_pos);
+validRowCount = 0;
+for rowIndex = 1:Rows_pos
+    currentRow_pos = intermediate_pos(rowIndex, :);
+    thetaWheel_pos_values = currentRow_pos(num_val+1:end);
+    diff_pos = diff(thetaWheel_pos_values);
+    diff_abs_pos = diff(abs(thetaWheel_pos_values));
 
-        if cond_theta0_under_1_pos && cond_theta0_over_0_pos && cond_thetaLast_neg_pos && cond_no_large_jumps_pos && cond_min_inc
-            validRowCount = validRowCount + 1;
-            tempMatrix(validRowCount, :) = currentRow_pos;
-            validIndices(rowIndex) = true; % Mark as valid (pos index)
-        end
-    end
+    % Increment checks
+    cond_max_jump = all(abs(diff_pos) < max_jump);
+    cond_mag_not_decreasing = all(diff_abs_pos >= 0);
+    cond_min_inc = all(diff_abs_pos(diff_abs_pos > 0) > min_theta_inc);
 
-    % Handle negative-acos outputs when available
-    if rowIndex <= Rows_neg
-        currentRow_neg = output_neg(rowIndex, :);
-
-        % Check for large jumps in thetaWheel values
-        thetaWheel_neg_values = currentRow_neg(num_val+1:end);
-        diff_neg = diff(thetaWheel_neg_values);
-        
-
-        % conditions for acceptance (negative branch)
-        cond_theta0_under_1_neg = abs(currentRow_neg(thetaIndex)) < 1;
-        cond_theta0_over_0_neg = abs(currentRow_neg(thetaIndex)) > 0;
-        cond_thetaLast_neg_neg = currentRow_neg(thetaIndexLast) < 0;
-        cond_no_large_jumps_neg = all(abs(diff_neg) < max_jump);
-        cond_min_inc_neg = all(diff(abs(thetaWheel_neg_values)) > min_theta_inc);
-
-        if cond_theta0_under_1_neg && cond_theta0_over_0_neg && cond_thetaLast_neg_neg && cond_no_large_jumps_neg && cond_min_inc_neg
-            validRowCount2 = validRowCount2 + 1;
-            tempMatrix2(validRowCount2, :) = currentRow_neg;
-            validIndices2(rowIndex) = true; % Mark as valid (neg index)
-        end
+    if cond_max_jump && cond_mag_not_decreasing && cond_min_inc
+        validRowCount = validRowCount + 1;
+        tempMatrix(validRowCount, :) = currentRow_pos;
     end
 end
-
 output_final_pos = tempMatrix(1:validRowCount, :);
+
+
+% For negative branch
+[Rows_neg, Cols_neg] = size(intermediate_neg);
+tempMatrix2 = zeros(Rows_neg, Cols_neg);
+validRowCount2 = 0;
+for rowIndex = 1:Rows_neg
+    currentRow_neg = intermediate_neg(rowIndex, :);
+    thetaWheel_neg_values = currentRow_neg(num_val+1:end);
+    diff_neg = diff(thetaWheel_neg_values);
+    diff_abs_neg = diff(abs(thetaWheel_neg_values));
+
+    % Increment checks
+    cond_max_jump = all(abs(diff_neg) < max_jump);
+    cond_mag_not_decreasing = all(diff_abs_neg >= 0);
+    cond_min_inc = all(diff_abs_neg(diff_abs_neg > 0) > min_theta_inc);
+
+    if cond_max_jump && cond_mag_not_decreasing && cond_min_inc
+        validRowCount2 = validRowCount2 + 1;
+        tempMatrix2(validRowCount2, :) = currentRow_neg;
+    end
+end
 output_final_neg = tempMatrix2(1:validRowCount2, :);
 
-disp('Completed Purge')
+disp(['Pass 2 complete. Final pos cases: ', num2str(size(output_final_pos, 1)), ', Final neg cases: ', num2str(size(output_final_neg, 1))]);
 
 % -- Build header row --
 thetaWheel_headers = cell(1, num_theta);
