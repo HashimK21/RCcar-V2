@@ -34,7 +34,6 @@ num_val = 7; %number of ngrid variables
 % Preallocate output matrix
 output_pos = zeros(num_cases, num_val + num_theta);
 output_neg = zeros(num_cases, num_val + num_theta);
-test = zeros(num_cases, num_val + num_theta);
 
 disp('created ngrid and output matrix')
 
@@ -49,7 +48,6 @@ for i = 1:numel(set1)
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
-    test_vals =  zeros(1, num_theta);
     parfor p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
         %thetaS = 0;
@@ -93,14 +91,12 @@ for i = 1:numel(set1)
 
         thetaWheel_vals_pos(p) = thetaWheel_pos;   % store output for positive acos
         thetaWheel_vals_neg(p) = thetaWheel_neg;   % store output for negative acos
-        %test_vals(p) = thetaWheelRAD;
 
     end
 
         % One row per case: 5 constants + values for angle dependants
         output_pos(i, :) = [h, s, t, zr, rO2, cx, cz, thetaWheel_vals_pos];
         output_neg(i, :) = [h, s, t, zr, rO2, cx, cz, thetaWheel_vals_neg];
-        %test(i, :) = [h, s, t, zr, rO2, test_vals];
 
 end
 
@@ -176,7 +172,6 @@ end
 
 output_final_pos = tempMatrix(1:validRowCount, :);
 output_final_neg = tempMatrix2(1:validRowCount2, :);
-test_final = test(validIndices, :); % Filter test matrix using validIndices
 
 disp('Completed Purge')
 
@@ -217,31 +212,5 @@ end
 fclose(fid2);
 
 disp('Print to CSV')
-
-% % -- test cases --
-% % -- Build header row for tests --
-% test_headers = cell(1, num_theta);
-%     for g_test = 1:num_theta
-%         test_headers{g_test} = ['testedVariable_' num2str(g_test)];
-%     end
-% headers_test = ["h", "s", "t", "zr", "r/2", test_headers];
-
-% disp('Created Test Headers')
-
-% fid = fopen('test_vals.csv', 'w');
-% header_line_test = strjoin(headers_test, ',');
-% fprintf(fid, '%s\n', header_line_test);
-
-% % -- write test matrix --
-% [rowsT, colsT] = size(test_final);
-% if rowsT > 0
-%     fmtT = [repmat('%g,', 1, colsT-1) '%g\n'];
-%     for r = 1:rowsT
-%         fprintf(fid, fmtT, test_final(r, :));
-%     end
-% end
-% fclose(fid);
-
-% disp('Print Test to CSV')
 
 disp('done')
