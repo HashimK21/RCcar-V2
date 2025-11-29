@@ -11,13 +11,13 @@ k = -6.93; %offset for KPI mid point projection
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 10:10:70; %values for h, radius of rotation
-set2 = 10:10:50; %values for steering arm, s
-set3 = 40:10:180; %values for tie rod, t
-set4 = 60:5:90; %values for r/2
-set5 = 30:10:100; %values for zr -- rack position in z
-set6 = 10:10:80; %values for x offset from pivot to tie rod joint (cx)
-set7 = 10:10:80; %values for z offset from pivot top end of steering arm
+set1 = 19:1:25; %values for h, radius of rotation
+set2 = 10:1:15; %values for steering arm, s
+set3 = 100:2:110; %values for tie rod, t
+set4 = 50:2:60; %values for r/2
+set5 = 20:2:30; %values for zr -- rack position in z
+set6 = 45:1:53; %values for x offset from pivot to tie rod joint (cx)
+set7 = 10:1:20; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
@@ -122,8 +122,10 @@ disp(['Pass 1 complete. Pos candidates: ', num2str(size(intermediate_pos, 1)), '
 
 
 %Second Pass: Filter based on incrementation conditions
-max_jump = 3; % Max allowable jump between thetaWheel values in degrees
-min_theta_inc = 0.01; % Min allowable incrament of the absolute value of thetaWheel values in degrees
+
+
+max_jump = 2.8; % Max allowable jump between thetaWheel values in degrees
+min_theta_inc = 0.7; % Min allowable incrament of the absolute value of thetaWheel values in degrees
 
 % For positive branch
 [Rows_pos, Cols_pos] = size(intermediate_pos);
