@@ -12,10 +12,10 @@ xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
 set1 = 19:1:25; %values for h, radius of rotation
-set2 = 10:1:15; %values for steering arm, s
+set2 = 11:0.5:13; %values for steering arm, s
 set3 = 100:2:110; %values for tie rod, t
-set4 = 50:2:60; %values for r/2
-set5 = 20:2:30; %values for zr -- rack position in z
+set4 = 45:1:50; %values for r/2
+set5 = 10:2:20; %values for zr -- rack position in z
 set6 = 45:1:53; %values for x offset from pivot to tie rod joint (cx)
 set7 = 10:1:20; %values for z offset from pivot top end of steering arm
 
@@ -23,7 +23,7 @@ set7 = 10:1:20; %values for z offset from pivot top end of steering arm
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
 
 %steering angle in radians
-theta_vals = linspace(0, 0.4363, 25);
+theta_vals = linspace(-0.4363, 0.4363, 50);
 
 
 num_cases = numel(set1);
@@ -35,6 +35,8 @@ output_pos = zeros(num_cases, num_val + num_theta);
 output_neg = zeros(num_cases, num_val + num_theta);
 
 disp('created ngrid and output matrix')
+
+tic();
 
 for i = 1:numel(set1)
     h = set1(i);
@@ -99,21 +101,24 @@ for i = 1:numel(set1)
 
 end
 
-disp('finished calculations')
+end_time = (toc())/60;
+
+disp(['finished calculations in time:' num2str(end_time) ' minutes'])
 
 % -- Purge bad rows --
 %location of thetaS = 0
 [~, idxZero] = min(abs(theta_vals - 0));
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
+max_upper_lim = 0.014;
 
 %First Pass: Filter based on thetaIndex and thetaIndexLast conditions
-cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < 1) & ...
+cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < max_upper_lim) & ...
                  (abs(output_pos(:, thetaIndex)) > 0) & ...
                  (output_pos(:, thetaIndexLast) < 0);
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
-cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) < 1) & ...
+cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) < max_upper_lim) & ...
                  (abs(output_neg(:, thetaIndex)) > 0) & ...
                  (output_neg(:, thetaIndexLast) < 0);
 intermediate_neg = output_neg(cond_neg_pass1, :);
@@ -137,12 +142,20 @@ for rowIndex = 1:Rows_pos
     diff_pos = diff(thetaWheel_pos_values);
     diff_abs_pos = diff(abs(thetaWheel_pos_values));
 
-    % Increment checks
+    % Checks
     cond_max_jump = all(abs(diff_pos) < max_jump);
-    cond_mag_not_decreasing = all(diff_abs_pos >= 0);
-    cond_min_inc = all(diff_abs_pos(diff_abs_pos > 0) > min_theta_inc);
 
-    if cond_max_jump && cond_mag_not_decreasing && cond_min_inc
+    % For thetaS < 0 (first half of diffs), magnitude should be decreasing.
+    cond_mag_decreasing = all(diff_abs_pos(1:(num_theta/2)-1) <= 0);
+    
+    % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
+    cond_mag_increasing = all(diff_abs_pos(num_theta/2:end) >= 0);
+
+    % Minimum increment check on the parts that are increasing
+    increasing_diffs = diff_abs_pos(diff_abs_pos > 0);
+    cond_min_inc = all(increasing_diffs > min_theta_inc);
+
+    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_min_inc
         validRowCount = validRowCount + 1;
         tempMatrix(validRowCount, :) = currentRow_pos;
     end
@@ -160,12 +173,20 @@ for rowIndex = 1:Rows_neg
     diff_neg = diff(thetaWheel_neg_values);
     diff_abs_neg = diff(abs(thetaWheel_neg_values));
 
-    % Increment checks
+    % Checks
     cond_max_jump = all(abs(diff_neg) < max_jump);
-    cond_mag_not_decreasing = all(diff_abs_neg >= 0);
-    cond_min_inc = all(diff_abs_neg(diff_abs_neg > 0) > min_theta_inc);
 
-    if cond_max_jump && cond_mag_not_decreasing && cond_min_inc
+    % For thetaS < 0 (first half of diffs), magnitude should be decreasing.
+    cond_mag_decreasing = all(diff_abs_neg(1:(num_theta/2)-1) <= 0);
+    
+    % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
+    cond_mag_increasing = all(diff_abs_neg(num_theta/2:end) >= 0);
+
+    % Minimum increment check on the parts that are increasing
+    increasing_diffs = diff_abs_neg(diff_abs_neg > 0);
+    cond_min_inc = all(increasing_diffs > min_theta_inc);
+
+    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_min_inc
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end

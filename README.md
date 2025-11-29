@@ -1,3 +1,6 @@
 # TODO
 -tune ngrid values to find acceptable steering configuration
-    - current behaviour about 0.5-0.6 degree incrimintation for 1 degree of servo rotation, this is not enough aiming for approx 1.5 degree for 1 degree
+    - try reducing upper jump limit to around 1.5-1.8, smoother jumps down stream too
+    - test full sweep of angles so both inner and outer wheel behaviour is gathered
+
+    current behviour shows anti ackermann geometry this needs to be fixed to give ackermann
