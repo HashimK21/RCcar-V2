@@ -11,13 +11,13 @@ k = -6.93; %offset for KPI mid point projection
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 19:1:25; %values for h, radius of rotation
-set2 = 11:0.5:13; %values for steering arm, s
-set3 = 100:2:110; %values for tie rod, t
-set4 = 45:1:50; %values for r/2
-set5 = 10:2:20; %values for zr -- rack position in z
-set6 = 45:1:53; %values for x offset from pivot to tie rod joint (cx)
-set7 = 10:1:20; %values for z offset from pivot top end of steering arm
+set1 = 10:10:70; %values for h, radius of rotation
+set2 = 10:10:50; %values for steering arm, s
+set3 = 50:10:180; %values for tie rod, t
+set4 = 20:10:120; %values for r/2
+set5 = 10:10:100; %values for zr -- rack position in z
+set6 = 10:10:70; %values for x offset from pivot to tie rod joint (cx)
+set7 = 10:10:70; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
@@ -110,7 +110,7 @@ disp(['finished calculations in time:' num2str(end_time) ' minutes'])
 [~, idxZero] = min(abs(theta_vals - 0));
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
-max_upper_lim = 0.014;
+max_upper_lim = 1;
 
 %First Pass: Filter based on thetaIndex and thetaIndexLast conditions
 cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < max_upper_lim) & ...
@@ -129,8 +129,8 @@ disp(['Pass 1 complete. Pos candidates: ', num2str(size(intermediate_pos, 1)), '
 %Second Pass: Filter based on incrementation conditions
 
 
-max_jump = 2.8; % Max allowable jump between thetaWheel values in degrees
-min_theta_inc = 0.7; % Min allowable incrament of the absolute value of thetaWheel values in degrees
+max_jump = 10; % Max allowable jump between thetaWheel values in degrees
+min_theta_inc = 10; % Min allowable incrament of the absolute value of thetaWheel values in degrees
 
 % For positive branch
 [Rows_pos, Cols_pos] = size(intermediate_pos);
@@ -155,7 +155,7 @@ for rowIndex = 1:Rows_pos
     increasing_diffs = diff_abs_pos(diff_abs_pos > 0);
     cond_min_inc = all(increasing_diffs > min_theta_inc);
 
-    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_min_inc
+    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing %&& cond_min_inc 
         validRowCount = validRowCount + 1;
         tempMatrix(validRowCount, :) = currentRow_pos;
     end
@@ -186,7 +186,7 @@ for rowIndex = 1:Rows_neg
     increasing_diffs = diff_abs_neg(diff_abs_neg > 0);
     cond_min_inc = all(increasing_diffs > min_theta_inc);
 
-    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_min_inc
+    if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing  %&& cond_min_inc
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end
