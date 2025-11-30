@@ -11,11 +11,11 @@ k = -6.93; %offset for KPI mid point projection
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 10:10:70; %values for h, radius of rotation
-set2 = 10:10:50; %values for steering arm, s
-set3 = 50:10:180; %values for tie rod, t
-set4 = 20:10:120; %values for r/2
-set5 = 10:10:100; %values for zr -- rack position in z
+set1 = 40:2:50; %values for h, radius of rotation
+set2 = 30:2:40; %values for steering arm, s
+set3 = 90:10:110; %values for tie rod, t
+set4 = 60:2:70; %values for r/2
+set5 = 70:10:100; %values for zr -- rack position in z
 set6 = 10:10:70; %values for x offset from pivot to tie rod joint (cx)
 set7 = 10:10:70; %values for z offset from pivot top end of steering arm
 
@@ -64,7 +64,7 @@ for i = 1:numel(set1)
         cz = -(czComp + s); %distance to wheel pivot from steering arm tie rod joint, z
 
         dx = xp - xr;
-        dz = zp - zr;
+        dz = zp + zr; %zr is considered negative downwards as front axel is at z=0
 
         Tnum = (t^2) - ((cx)^2) - ((cz)^2) - ((dx)^2) - ((dz)^2);
         T = Tnum ./ 2; %constant terms of each case
@@ -198,7 +198,7 @@ disp(['Pass 2 complete. Final pos cases: ', num2str(size(output_final_pos, 1)), 
 % -- Build header row --
 thetaWheel_headers = cell(1, num_theta);
     for g = 1:num_theta
-        thetaWheel_headers{g} = ['thetaWheel_' num2str(g)];
+        thetaWheel_headers{g} = ['thetaWheel_' num2str(theta_vals(g))];
     end
 headers = ["h", "s", "t", "zr", "r/2", "cx", "cz", thetaWheel_headers];
 
