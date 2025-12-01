@@ -13,9 +13,9 @@ xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 %Rack Position
 set1 = 40:2:50; %values for h, radius of rotation
 set2 = 30:2:40; %values for steering arm, s
-set3 = 90:10:110; %values for tie rod, t
+set3 = 100:2:110; %values for tie rod, t
 set4 = 60:2:70; %values for r/2
-set5 = 70:10:100; %values for zr -- rack position in z
+set5 = 50:5:70; %values for zr -- rack position in z
 set6 = 10:10:70; %values for x offset from pivot to tie rod joint (cx)
 set7 = 10:10:70; %values for z offset from pivot top end of steering arm
 
@@ -23,7 +23,7 @@ set7 = 10:10:70; %values for z offset from pivot top end of steering arm
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
 
 %steering angle in radians
-theta_vals = linspace(-0.4363, 0.4363, 50);
+theta_vals = linspace(-25, 25, 51);
 
 
 num_cases = numel(set1);
@@ -53,7 +53,7 @@ for i = 1:numel(set1)
         thetaS = theta_vals(p);
         %thetaS = 0;
         %finding rack displacement
-        Delx = h .* sin(thetaS);
+        Delx = h .* sind(thetaS);
         xr = Delx + rO2;
 
         %Wheel angle
@@ -129,8 +129,9 @@ disp(['Pass 1 complete. Pos candidates: ', num2str(size(intermediate_pos, 1)), '
 %Second Pass: Filter based on incrementation conditions
 
 
-max_jump = 10; % Max allowable jump between thetaWheel values in degrees
-min_theta_inc = 10; % Min allowable incrament of the absolute value of thetaWheel values in degrees
+max_jump = 2.8; % Max allowable jump between thetaWheel values in degrees
+min_theta_inc = 0.8; % Min allowable incrament of the absolute value of thetaWheel values in degrees
+min_first_last_diff = 0.4; % Min difference between the first and last thetaWheel magnitudes
 
 % For positive branch
 [Rows_pos, Cols_pos] = size(intermediate_pos);
@@ -146,16 +147,18 @@ for rowIndex = 1:Rows_pos
     cond_max_jump = all(abs(diff_pos) < max_jump);
 
     % For thetaS < 0 (first half of diffs), magnitude should be decreasing.
-    cond_mag_decreasing = all(diff_abs_pos(1:(num_theta/2)-1) <= 0);
+    cond_mag_decreasing = all(diff_abs_pos(1:ceil(num_theta/2)-1) <= 0);
     
     % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
-    cond_mag_increasing = all(diff_abs_pos(num_theta/2:end) >= 0);
+    cond_mag_increasing = all(diff_abs_pos(ceil(num_theta/2):end) >= 0);
 
     % Minimum increment check on the parts that are increasing
     increasing_diffs = diff_abs_pos(diff_abs_pos > 0);
     cond_min_inc = all(increasing_diffs > min_theta_inc);
 
-    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing %&& cond_min_inc 
+    cond_first_last = (abs(thetaWheel_pos_values(1)) - abs(thetaWheel_pos_values(end))) > min_first_last_diff;
+
+    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_min_inc && cond_first_last
         validRowCount = validRowCount + 1;
         tempMatrix(validRowCount, :) = currentRow_pos;
     end
@@ -177,16 +180,18 @@ for rowIndex = 1:Rows_neg
     cond_max_jump = all(abs(diff_neg) < max_jump);
 
     % For thetaS < 0 (first half of diffs), magnitude should be decreasing.
-    cond_mag_decreasing = all(diff_abs_neg(1:(num_theta/2)-1) <= 0);
+    cond_mag_decreasing = all(diff_abs_neg(1:ceil(num_theta/2)-1) <= 0);
     
     % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
-    cond_mag_increasing = all(diff_abs_neg(num_theta/2:end) >= 0);
+    cond_mag_increasing = all(diff_abs_neg(ceil(num_theta/2):end) >= 0);
 
     % Minimum increment check on the parts that are increasing
     increasing_diffs = diff_abs_neg(diff_abs_neg > 0);
     cond_min_inc = all(increasing_diffs > min_theta_inc);
 
-    if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing  %&& cond_min_inc
+    cond_first_last = (abs(thetaWheel_neg_values(1)) - abs(thetaWheel_neg_values(end))) > min_first_last_diff;
+
+    if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing  && cond_min_inc && cond_first_last
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end
