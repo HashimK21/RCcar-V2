@@ -3,5 +3,6 @@
     - NOTE: minimum incrementation is currently disabled (not run yet)
 
     ackermann achieved slightly, still in need of tuning
-    currently inner angle is bigger than outer by 0.4-0.5 degrees, target between 5-10 degrees if possible, set goal to 7.5. 
+    currently inner angle is bigger than outer by 1.8-2 degrees, target  5 
+    aim for +10 on angle mag
 
