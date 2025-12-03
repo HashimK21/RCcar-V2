@@ -11,13 +11,13 @@ k = -6.93; %offset for KPI mid point projection
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 50:1:54; %values for h, radius of rotation
-set2 = 34:1:40; %values for steering arm, s
-set3 = 102:1:109; %values for tie rod, t
-set4 = 63:1:69; %values for r/2
-set5 = 75:1:80; %values for zr -- rack position in z
-set6 = 8:1:11; %values for x offset from pivot to tie rod joint (cx)
-set7 = 8:1:15; %values for z offset from pivot top end of steering arm
+set1 = 20:10:80; %values for h, radius of rotation
+set2 = 20:10:60; %values for steering arm, s
+set3 = 80:5:100; %values for tie rod, t
+set4 = 55:1:62; %values for r/2
+set5 = 70:1:75; %values for zr -- rack position in z
+set6 = 8:2:20; %values for x offset from pivot to tie rod joint (cx)
+set7 = 15:1:20; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
@@ -110,7 +110,7 @@ disp(['finished calculations in time:' num2str(end_time) ' minutes'])
 [~, idxZero] = min(abs(theta_vals - 0));
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
-max_upper_lim = 0.05;
+max_upper_lim = 1;
 
 %First Pass: Filter based on thetaIndex and thetaIndexLast conditions
 cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < max_upper_lim) & ...
@@ -129,9 +129,9 @@ disp(['Pass 1 complete. Pos candidates: ', num2str(size(intermediate_pos, 1)), '
 %Second Pass: Filter based on incrementation conditions
 
 
-max_jump = 2.3; % Max allowable jump between thetaWheel values in degrees
+max_jump = 2.8; % Max allowable jump between thetaWheel values in degrees
 min_theta_inc = 0.8; % Min allowable incrament of the absolute value of thetaWheel values in degrees
-min_first_last_diff = 1.8; % Min difference between the first and last thetaWheel magnitudes
+min_first_last_diff = 0.8; % Min difference between the first and last thetaWheel magnitudes
 
 % For positive branch
 [Rows_pos, Cols_pos] = size(intermediate_pos);

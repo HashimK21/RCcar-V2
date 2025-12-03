@@ -4,5 +4,7 @@
 
     ackermann achieved slightly, still in need of tuning
     currently inner angle is bigger than outer by 1.8-2 degrees, target  5 
-    aim for +10 on angle mag
+    30 degree in, 29 out, keep trying to push this
+
+    implement calcualtion for ackerman angle and increase factors to achieve towards ideal.
 
