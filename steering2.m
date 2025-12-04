@@ -7,6 +7,7 @@ wb = 352; %wheelbase
 tireD = 85; %tire diamater
 tireW = 34; %tire width
 k = -6.93; %offset for KPI mid point projection
+rs = 4.97; %scrub radius
 
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
@@ -64,7 +65,7 @@ for i = 1:numel(set1)
         cz = -(czComp + s); %distance to wheel pivot from steering arm tie rod joint, z
 
         dx = xp - xr;
-        dz = zp + zr; %zr is considered negative downwards as front axel is at z=0
+        dz = zp + zr;
 
         Tnum = (t^2) - ((cx)^2) - ((cz)^2) - ((dx)^2) - ((dz)^2);
         T = Tnum ./ 2; %constant terms of each case
@@ -163,7 +164,7 @@ for rowIndex = 1:Rows_pos
         tempMatrix(validRowCount, :) = currentRow_pos;
     end
 end
-output_final_pos = tempMatrix(1:validRowCount, :);
+output_secondpass_pos = tempMatrix(1:validRowCount, :);
 
 
 % For negative branch
@@ -196,9 +197,86 @@ for rowIndex = 1:Rows_neg
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end
 end
+output_secondpass_neg = tempMatrix2(1:validRowCount2, :);
+
+disp(['Pass 2 complete. pos cases: ', num2str(size(output_secondpass_pos, 1)), ',neg cases: ', num2str(size(output_secondpass_neg, 1))]);
+
+%Third Pass: Ackermann check
+tollerance = 0.1; %min alpha difference
+ackLim = 20; %min ackermann percentage
+TurningCircleLim = 300; %min turning circle diameter in mm
+
+% For positive branch
+[Rows_pos, Cols_pos] = size(output_secondpass_pos);
+tempMatrix = zeros(Rows_pos, Cols_pos);
+validRowCount = 0;
+for rowIndex = 1:Rows_pos
+    currentRow_pos = output_secpass_pos(rowIndex, :);
+    t = currentRow_pos(3);
+    rO2 = currentRow_pos(4);
+    zr = currentRow_pos(5);
+    cz = currentRow_pos(7);
+
+    %calculate ackermann angle
+    dom = xj - rO2;
+    alpha = asind(dom ./ t);
+
+    %check for ackermann
+    domCheck = -(abs(zr) + abs(cz));
+    alphaCheck = acosd(domCheck ./ t);
+  
+    %ackermann percentage check
+    thetaIn = currentRow_pos(num_val+1);
+    thetaOut = currentRow_pos(num_val + num_theta);
+    percentAck = (abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn) .* 100;
+
+    %Turning circle check
+    Ds = 2 .* ((wb ./ sind(abs(thetaOut))) + rs);
+
+    if (abs(alpha - alphaCheck) < tollerance) && (percentAck > ackLim)
+        validRowCount = validRowCount + 1;
+        tempMatrix(validRowCount, :) = currentRow_pos;
+    end   
+end
+
+output_final_pos = tempMatrix(1:validRowCount, :);
+
+% Repeat for negative branch
+[Rows_neg, Cols_neg] = size(output_secondpass_neg);
+tempMatrix2 = zeros(Rows_neg, Cols_neg);
+validRowCount2 = 0;
+for rowIndex = 1:Rows_neg
+    currentRow_neg = output_secondpass_neg(rowIndex, :);
+    t = currentRow_neg(3);
+    rO2 = currentRow_neg(4);
+    zr = currentRow_neg(5);
+    cz = currentRow_neg(7);
+
+    %calculate ackermann angle
+    dom = xj - rO2;
+    alpha = asind(dom ./ t);
+
+    %check for ackermann
+    domCheck = -(abs(zr) + abs(cz));
+    alphaCheck = acosd(domCheck ./ t);
+
+    %ackermann percentage check
+    thetaIn = currentRow_neg(num_val+1);
+    thetaOut = currentRow_neg(num_val + num_theta);
+    percentAck = (abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn) .* 100;
+
+    %Turning circle check
+    Ds = 2 .* ((wb ./ sind(abs(thetaOut))) + rs);
+
+    if (abs(alpha - alphaCheck) < tollerance) && (percentAck > ackLim)
+        validRowCount2 = validRowCount2 + 1;
+        tempMatrix2(validRowCount2, :) = currentRow_neg;
+    end   
+end
+
 output_final_neg = tempMatrix2(1:validRowCount2, :);
 
-disp(['Pass 2 complete. Final pos cases: ', num2str(size(output_final_pos, 1)), ', Final neg cases: ', num2str(size(output_final_neg, 1))]);
+disp(['Pass 3 complete. Final pos cases: ', num2str(size(output_final_pos, 1)), ',Final neg cases: ', num2str(size(output_final_neg, 1))]);
 
 % -- Build header row --
 thetaWheel_headers = cell(1, num_theta);
