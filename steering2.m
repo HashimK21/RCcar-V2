@@ -115,7 +115,7 @@ thetaIndexLast = num_val + num_theta;
 %First pass variables
 max_upper_lim = 1;
 %Second pass variables
-max_jump = 5; % Max allowable jump between thetaWheel values in degrees
+max_jump = 10; % Max allowable jump between thetaWheel values in degrees
 zr_lim = 10;
 %Third pass variables
 ackLim = 0; %min ackermann percentage
@@ -247,12 +247,12 @@ for rowIndex = 1:Rows_neg
     %ackermann percentage check
     thetaIn = currentRow_neg(num_val+1);
     thetaOut = currentRow_neg(num_val + num_theta);
-    percentAck = (abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn) .* 100;
+    percentAck = ((abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn)) .* 100;
 
     %Turning circle check
     Ds = 2 .* ((wb ./ sind(abs(thetaOut))) + rs);
 
-    if (percentAck > ackLim) 
+    if (percentAck >= ackLim) 
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end   
