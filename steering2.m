@@ -1,5 +1,4 @@
 clc
-pkg load parallel
 
 %global constants
 tw = 220; %track width
@@ -12,19 +11,18 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 10:10:50; %values for h, radius of rotation
-set2 = 10:1:15; %values for steering arm, s
-set3 = 50:10:80; %values for tie rod, t
-set4 = 40:10:60; %values for r/2
-set5 = 60:10:140; %values for zr
-set6 = 9:1:15; %values for x offset from pivot to tie rod joint (cx)
-set7 = 6:1:18; %values for z offset from pivot top end of steering arm
+set1 = 20:1:30; %values for h, radius of rotation
+set2 = 15:1:20; %values for steering arm, s
+set3 = 55:1:65; %values for tie rod, t
+set4 = 40:1:50; %values for r/2
+set5 = 8:1:15; %values for x offset from pivot to tie rod joint (cx)
+set6 = 6:1:18; %values for z offset from pivot top end of steering arm
 
-[set1, set2, set3, set4, set5, set6, set7] = ndgrid(set1, set2, set3, set4, set5 , set6, set7);
-combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:), set7(:)];
+[set1, set2, set3, set4, set5, set6] = ndgrid(set1, set2, set3, set4, set5 , set6);
+combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:)];
 
 %steering angle in radians
-theta_vals = linspace(-25, 25, 51);
+theta_vals = linspace(-10, 10, 21);
 
 
 num_cases = numel(set1);
@@ -35,7 +33,7 @@ num_val = 7; %number of ngrid variables
 output_pos = zeros(num_cases, num_val + num_theta);
 output_neg = zeros(num_cases, num_val + num_theta);
 
-disp('created ngrid and output matrix')
+disp('created ndgrid and output matrix')
 
 tic();
 
@@ -44,26 +42,32 @@ for i = 1:numel(set1)
     s = set2(i);
     t = set3(i);
     rO2 = set4(i);
-    zr = set5(i);
-    cxComp = set6(i);
-    czComp = set7(i);
+    cxComp = set5(i);
+    czComp = set6(i);
+
+    %Wheel Pivot Position
+    xp = xj - k; 
+    zp = 0;
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
-    parfor p = 1:numel(theta_vals)
+    for p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
         %thetaS = 0;
         %finding rack displacement
         Delx = h .* sind(thetaS);
         xr = Delx + rO2;
 
-        %Wheel angle
-        xp = xj - k; %x value for wheel pivot
-        zp = 0;
-
         cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
         cz = -(czComp + s); %distance to wheel pivot from steering arm tie rod joint, z
+    
+        %zr calculation
+        xcomp = abs(xj) - abs(cx) - abs(rO2); 
+        trAng = asind(xcomp ./ t);
+        tzComp = t.*cosd(trAng);
+        zr= abs(tzComp) + abs(cz);
 
+        %Wheel angle
         dx = xp - xr;
         dz = zp + zr; %z towards rear is negative, dz is defined as zp - zr,
                       % therfore + zr to compensate for this
@@ -115,10 +119,9 @@ thetaIndexLast = num_val + num_theta;
 %First pass variables
 max_upper_lim = 1;
 %Second pass variables
-max_jump = 10; % Max allowable jump between thetaWheel values in degrees
-zr_lim = 50;
+max_jump = 5; % Max allowable jump between thetaWheel values in degrees
 %Third pass variables
-ackLim = 0; %min ackermann percentage
+ackLim = 25; %min ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
@@ -143,11 +146,6 @@ tempMatrix = zeros(Rows_pos, Cols_pos);
 validRowCount = 0;
 for rowIndex = 1:Rows_pos
     currentRow_pos = intermediate_pos(rowIndex, :);
-    t = currentRow_pos(3);
-    rO2 = currentRow_pos(4);
-    zr = currentRow_pos(5);
-    cx = currentRow_pos(6);
-    cz = currentRow_pos(7);
     thetaWheel_pos_values = currentRow_pos(num_val+1:end);
     diff_pos = diff(thetaWheel_pos_values);
     diff_abs_pos = diff(abs(thetaWheel_pos_values));
@@ -161,15 +159,7 @@ for rowIndex = 1:Rows_pos
     % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
     cond_mag_increasing = all(diff_abs_pos(ceil(num_theta/2):end) >= 0);
 
-    %zr check
-    xcomp = abs(xj) - abs(cx) - abs(rO2); 
-    trAng = asind(xcomp ./t);
-    tzComp = t.*cosd(trAng);
-    zr_check = abs(tzComp) + abs(cz);
-
-    cond_zr = all((abs(zr_check - zr) <= zr_lim));
-
-    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing && cond_zr
+    if cond_max_jump && cond_mag_decreasing && cond_mag_increasing
         validRowCount = validRowCount + 1;
         tempMatrix(validRowCount, :) = currentRow_pos;
     end
@@ -183,11 +173,6 @@ tempMatrix2 = zeros(Rows_neg, Cols_neg);
 validRowCount2 = 0;
 for rowIndex = 1:Rows_neg
     currentRow_neg = intermediate_neg(rowIndex, :);
-    t = currentRow_neg(3);
-    rO2 = currentRow_neg(4);
-    zr = currentRow_neg(5);
-    cx = currentRow_neg(6);
-    cz = currentRow_neg(7);
     thetaWheel_neg_values = currentRow_neg(num_val+1:end);
     diff_neg = diff(thetaWheel_neg_values);
     diff_abs_neg = diff(abs(thetaWheel_neg_values));
@@ -201,15 +186,7 @@ for rowIndex = 1:Rows_neg
     % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
     cond_mag_increasing = all(diff_abs_neg(ceil(num_theta/2):end) >= 0);
 
-    %zr check
-    xcomp = abs(xj) - abs(cx) - abs(rO2); 
-    trAng = asind(xcomp ./ t);
-    tzComp = t.*cosd(trAng);
-    zr_check = abs(tzComp) + abs(cz);
-
-    cond_zr = all((abs(zr_check - zr) <= zr_lim));
-
-    if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing && cond_zr
+    if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
     end
@@ -224,7 +201,7 @@ disp(['Pass 2 complete. Pos cases: ', num2str(size(output_secondpass_pos, 1)), '
 tempMatrix = zeros(Rows_pos, Cols_pos);
 validRowCount = 0;
 for rowIndex = 1:Rows_pos
-    currentRow_pos = output_secpass_pos(rowIndex, :);
+    currentRow_pos = output_secondpass_pos(rowIndex, :);
 
     %ackermann percentage check
     thetaIn = currentRow_pos(num_val+1);
