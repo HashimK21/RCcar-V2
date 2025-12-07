@@ -15,6 +15,8 @@ and remove s, cz becomes full z component of steering lever. it unnecessary to c
 
 this will allow large range of rack and tie rod configurations to be checked
 
+an issue has been found, source of which is currently unknown :(
+
 
   
 

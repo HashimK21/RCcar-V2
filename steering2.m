@@ -10,16 +10,12 @@ rs = 4.97; %scrub radius
 
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
-%Rack Position
-set1 = 15:1:25; %values for h, radius of rotation
-set2 = 15:1:20; %values for steering arm, s
-set3 = 75:1:85; %values for tie rod, t
-set4 = 55:1:65; %values for r/2
-set5 = 15:1:20; %values for x offset from pivot to tie rod joint (cx)
-set6 = 18:1:24; %values for z offset from pivot top end of steering arm
+%-- Create ndgrid of variables --
+set1 = 10:0.5:100; %values for tie rod, t
+set2 = 10:0.5:100; %values for r/2
 
-[set1, set2, set3, set4, set5, set6] = ndgrid(set1, set2, set3, set4, set5 , set6);
-combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:)];
+[set1, set2] = ndgrid(set1, set2);
+combinations = [set1(:), set2(:)];
 
 %steering angle in radians
 theta_vals = linspace(-10, 10, 21);
@@ -27,7 +23,7 @@ theta_vals = linspace(-10, 10, 21);
 
 num_cases = numel(set1);
 num_theta = numel(theta_vals);
-num_val = 7; %number of ngrid variables
+num_val = 6; %number of ngrid variables + constants
 
 % Preallocate output matrix
 output_pos = zeros(num_cases, num_val + num_theta);
@@ -38,16 +34,16 @@ disp('created ndgrid and output matrix')
 tic();
 
 for i = 1:numel(set1)
-    h = set1(i);
-    s = set2(i);
-    t = set3(i);
-    rO2 = set4(i);
-    cxComp = set5(i);
-    czComp = set6(i);
+    t = set1(i);
+    rO2 = set2(i);
+    
+    h = 50; %servo arm length
+    cxComp = 8; %steering lever x component
+    czComp = 36; %steering lever z component
 
     %Wheel Pivot Position
-    xp = xj - k; 
-    zp = 0;
+    xp = xj - k; %x towards outside of car is positive
+    zp = 0; %z towards rear of car is negative
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
@@ -59,7 +55,7 @@ for i = 1:numel(set1)
         xr = Delx + rO2;
 
         cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
-        cz = -(czComp + s); %distance to wheel pivot from steering arm tie rod joint, z
+        cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
     
         %zr calculation
         xcomp = abs(xj) - abs(cx) - abs(rO2); 
@@ -102,8 +98,8 @@ for i = 1:numel(set1)
     end
 
         % One row per case: 5 constants + values for angle dependants
-        output_pos(i, :) = [h, s, t, rO2, zr, cx, cz, thetaWheel_vals_pos];
-        output_neg(i, :) = [h, s, t, rO2, zr, cx, cz, thetaWheel_vals_neg];
+        output_pos(i, :) = [h, t, rO2, zr, cx, cz, thetaWheel_vals_pos];
+        output_neg(i, :) = [h, t, rO2, zr, cx, cz, thetaWheel_vals_neg];
 
 end
 
@@ -117,23 +113,23 @@ thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 
 %First pass variables
-max_upper_lim = 1;
+max_upper_lim = 1000;
 %Second pass variables
-max_jump = 5; % Max allowable jump between thetaWheel values in degrees
+max_jump = 1000000; % Max allowable jump between thetaWheel values in degrees
 %Third pass variables
-ackLim = 25; %min ackermann percentage
+ackLim = -1000; %min ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
 % -- First Pass: Filter based on thetaIndex and thetaIndexLast conditions --
-cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) < max_upper_lim) & ...
-                 (abs(output_pos(:, thetaIndex)) > 0) & ...
-                 (output_pos(:, thetaIndexLast) < 0);
+cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) & ...
+                 (abs(output_pos(:, thetaIndex)) >= 0); %& ...
+                 %(output_pos(:, thetaIndexLast) < 0);
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
-cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) < max_upper_lim) & ...
-                 (abs(output_neg(:, thetaIndex)) > 0) & ...
-                 (output_neg(:, thetaIndexLast) < 0);
+cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) & ...
+                 (abs(output_neg(:, thetaIndex)) >= 0); %& ...
+                 %(output_neg(:, thetaIndexLast) < 0);
 intermediate_neg = output_neg(cond_neg_pass1, :);
 
 disp(['Pass 1 complete. Pos cases: ', num2str(size(intermediate_pos, 1)), ', Neg cases: ', num2str(size(intermediate_neg, 1))]);
@@ -249,7 +245,7 @@ thetaWheel_headers = cell(1, num_theta);
     for g = 1:num_theta
         thetaWheel_headers{g} = ['thetaWheel_' num2str(theta_vals(g))];
     end
-headers = ["h", "s", "t", "r/2", "zr", "cx", "cz", thetaWheel_headers];
+headers = ["h", "t", "r/2", "zr", "cx", "cz", thetaWheel_headers];
 
 disp('Created Headers')
 
