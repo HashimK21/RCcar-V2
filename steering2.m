@@ -11,12 +11,12 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %Rack Position
-set1 = 20:1:30; %values for h, radius of rotation
+set1 = 15:1:25; %values for h, radius of rotation
 set2 = 15:1:20; %values for steering arm, s
-set3 = 55:1:65; %values for tie rod, t
-set4 = 40:1:50; %values for r/2
-set5 = 8:1:15; %values for x offset from pivot to tie rod joint (cx)
-set6 = 6:1:18; %values for z offset from pivot top end of steering arm
+set3 = 75:1:85; %values for tie rod, t
+set4 = 55:1:65; %values for r/2
+set5 = 15:1:20; %values for x offset from pivot to tie rod joint (cx)
+set6 = 18:1:24; %values for z offset from pivot top end of steering arm
 
 [set1, set2, set3, set4, set5, set6] = ndgrid(set1, set2, set3, set4, set5 , set6);
 combinations = [set1(:), set2(:), set3(:), set4(:), set5(:), set6(:)];
@@ -64,7 +64,7 @@ for i = 1:numel(set1)
         %zr calculation
         xcomp = abs(xj) - abs(cx) - abs(rO2); 
         trAng = asind(xcomp ./ t);
-        tzComp = t.*cosd(trAng);
+        tzComp = t .* cosd(trAng);
         zr= abs(tzComp) + abs(cz);
 
         %Wheel angle
