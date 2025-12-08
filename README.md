@@ -22,3 +22,7 @@ added transform to rotate frame of reference to car? (unsure if this works)
 
 removed transform and reformulated zr, i think it works
 
+it does work but needs tuning
+
+write condition to checker ackermann % on each angle and its corrisponding opposite angle, try not to hard code if possible
+

@@ -11,8 +11,8 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %-- Create ndgrid of variables --
-set1 = 10:0.5:100; %values for tie rod, t
-set2 = 10:0.5:100; %values for r/2
+set1 = 10:1:100; %values for tie rod, t
+set2 = 10:1:70; %values for r/2
 
 [set1, set2] = ndgrid(set1, set2);
 combinations = [set1(:), set2(:)];
@@ -37,9 +37,9 @@ for i = 1:numel(set1)
     t = set1(i);
     rO2 = set2(i);
     
-    h = 50; %servo arm length
-    cxComp = 8; %steering lever x component
-    czComp = 16; %steering lever z component
+    h = 20; %servo arm length
+    cxComp = 9; %steering lever x component
+    czComp = 10; %steering lever z component
 
     %Wheel Pivot Position
     xp = xj - k; %x towards outside of car is positive
@@ -56,13 +56,8 @@ for i = 1:numel(set1)
 
         cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
         cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
-    
-        %zr calculation
-        % xcomp = abs(xj) - abs(cx) - abs(rO2); 
-        % trAng = asind(xcomp ./ t);
-        % tzComp = t .* cosd(trAng);
-        % zr= abs(tzComp) + abs(cz);
 
+        %Finding zr position
         zr_pos_branch = zp + cz + sqrt((t^2) - ((xp + cx - rO2)^2));
         zr_neg_branch = zp + cz - sqrt((t^2) - ((xp + cx - rO2)^2));
 
@@ -94,19 +89,10 @@ for i = 1:numel(set1)
             thetaWheelRAD = NaN;
         else
             arg = T ./ R;
-            arg = min(max(arg, -1), 1);        % clamp to [-1,1]
-            phi = atan2(beta, alpha);          % correct quadrant
+            arg = min(max(arg, -1), 1); % clamp to [-1,1]
+            phi = atan2(beta, alpha); % correct quadrant
             thetaWheelRAW_pos = phi + acos(arg);
             thetaWheelRAW_neg = phi - acos(arg);
-
-            %transform for car orientation
-            % dom_pos = cx*sin(thetaWheelRAW_pos) + cz*cos(thetaWheelRAW_pos);
-            % nume_pos = cx*cos(thetaWheelRAW_pos) - cz*sin(thetaWheelRAW_pos);
-            % thetaWheelRAD1 = atan2(dom_pos, nume_pos);
-            
-            % dom_neg = cx*sin(thetaWheelRAW_neg) + cz*cos(thetaWheelRAW_neg);
-            % nume_neg = cx*cos(thetaWheelRAW_neg) - cz*sin(thetaWheelRAW_neg);
-            % thetaWheelRAD2 = atan2(dom_neg, nume_neg);
 
             thetaWheelRAD1 = thetaWheelRAW_pos;
             thetaWheelRAD2 = thetaWheelRAW_neg;
@@ -137,23 +123,23 @@ thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 
 %First pass variables
-max_upper_lim = 1000;
+max_upper_lim = 0.01;
 %Second pass variables
-max_jump = 1000000; % Max allowable jump between thetaWheel values in degrees
+max_jump = 7; % Max allowable jump between thetaWheel values in degrees
 %Third pass variables
-ackLim = -1000; %min ackermann percentage
+ackLim = 0; %min ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
 % -- First Pass: Filter based on thetaIndex and thetaIndexLast conditions --
 cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) & ...
-                 (abs(output_pos(:, thetaIndex)) >= 0); %& ...
-                 %(output_pos(:, thetaIndexLast) < 0);
+                 (abs(output_pos(:, thetaIndex)) >= 0) & ...
+                 (output_pos(:, thetaIndexLast) < 0);
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
 cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) & ...
-                 (abs(output_neg(:, thetaIndex)) >= 0); %& ...
-                 %(output_neg(:, thetaIndexLast) < 0);
+                 (abs(output_neg(:, thetaIndex)) >= 0) & ...
+                 (output_neg(:, thetaIndexLast) < 0);
 intermediate_neg = output_neg(cond_neg_pass1, :);
 
 disp(['Pass 1 complete. Pos cases: ', num2str(size(intermediate_pos, 1)), ', Neg cases: ', num2str(size(intermediate_neg, 1))]);
