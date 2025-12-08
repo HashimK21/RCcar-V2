@@ -83,10 +83,17 @@ for i = 1:numel(set1)
             arg = T ./ R;
             arg = min(max(arg, -1), 1);        % clamp to [-1,1]
             phi = atan2(beta, alpha);          % correct quadrant
-            thetaWheelFromHorz1 = phi + acos(arg);
-            thetaWheelFromHorz2 = phi - acos(arg);
-            thetaWheelRAD1 = (pi/2) - thetaWheelFromHorz1;
-            thetaWheelRAD2 = (pi/2) - thetaWheelFromHorz2;
+            thetaWheelRAW_pos = phi + acos(arg);
+            thetaWheelRAW_neg = phi - acos(arg);
+
+            %transform for car orientation
+            dom_pos = cx*sin(thetaWheelRAW_pos) + cz*cos(thetaWheelRAW_pos);
+            nume_pos = cx*cos(thetaWheelRAW_pos) - cz*sin(thetaWheelRAW_pos);
+            thetaWheelRAD1 = atan2(dom_pos, nume_pos);
+            
+            dom_neg = cx*sin(thetaWheelRAW_neg) + cz*cos(thetaWheelRAW_neg);
+            nume_neg = cx*cos(thetaWheelRAW_neg) - cz*sin(thetaWheelRAW_neg);
+            thetaWheelRAD2 = atan2(dom_neg, nume_neg);
         end
 
         thetaWheel_pos = thetaWheelRAD1 .* (180/pi);
