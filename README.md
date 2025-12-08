@@ -19,3 +19,6 @@ an issue has been found, source of which is currently unknown :(
 
 added transform to rotate frame of reference to car? (unsure if this works) 
 
+
+removed transform and reformulated zr, i think it works
+

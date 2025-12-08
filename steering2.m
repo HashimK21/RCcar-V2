@@ -39,7 +39,7 @@ for i = 1:numel(set1)
     
     h = 50; %servo arm length
     cxComp = 8; %steering lever x component
-    czComp = 36; %steering lever z component
+    czComp = 16; %steering lever z component
 
     %Wheel Pivot Position
     xp = xj - k; %x towards outside of car is positive
@@ -58,15 +58,28 @@ for i = 1:numel(set1)
         cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
     
         %zr calculation
-        xcomp = abs(xj) - abs(cx) - abs(rO2); 
-        trAng = asind(xcomp ./ t);
-        tzComp = t .* cosd(trAng);
-        zr= abs(tzComp) + abs(cz);
+        % xcomp = abs(xj) - abs(cx) - abs(rO2); 
+        % trAng = asind(xcomp ./ t);
+        % tzComp = t .* cosd(trAng);
+        % zr= abs(tzComp) + abs(cz);
+
+        zr_pos_branch = zp + cz + sqrt((t^2) - ((xp + cx - rO2)^2));
+        zr_neg_branch = zp + cz - sqrt((t^2) - ((xp + cx - rO2)^2));
+
+        if (zr_neg_branch < 0) && (zr_pos_branch >= 0)
+            zr = zr_neg_branch;
+
+        elseif (zr_pos_branch < 0) && (zr_neg_branch >= 0)
+            zr = zr_pos_branch;
+
+        else
+            zr = NaN;
+
+        end
 
         %Wheel angle
         dx = xp - xr;
-        dz = zp + zr; %z towards rear is negative, dz is defined as zp - zr,
-                      % therfore + zr to compensate for this
+        dz = zp - zr; 
 
         Tnum = (t^2) - ((cx)^2) - ((cz)^2) - ((dx)^2) - ((dz)^2);
         T = Tnum ./ 2; %constant terms of each case
@@ -87,13 +100,17 @@ for i = 1:numel(set1)
             thetaWheelRAW_neg = phi - acos(arg);
 
             %transform for car orientation
-            dom_pos = cx*sin(thetaWheelRAW_pos) + cz*cos(thetaWheelRAW_pos);
-            nume_pos = cx*cos(thetaWheelRAW_pos) - cz*sin(thetaWheelRAW_pos);
-            thetaWheelRAD1 = atan2(dom_pos, nume_pos);
+            % dom_pos = cx*sin(thetaWheelRAW_pos) + cz*cos(thetaWheelRAW_pos);
+            % nume_pos = cx*cos(thetaWheelRAW_pos) - cz*sin(thetaWheelRAW_pos);
+            % thetaWheelRAD1 = atan2(dom_pos, nume_pos);
             
-            dom_neg = cx*sin(thetaWheelRAW_neg) + cz*cos(thetaWheelRAW_neg);
-            nume_neg = cx*cos(thetaWheelRAW_neg) - cz*sin(thetaWheelRAW_neg);
-            thetaWheelRAD2 = atan2(dom_neg, nume_neg);
+            % dom_neg = cx*sin(thetaWheelRAW_neg) + cz*cos(thetaWheelRAW_neg);
+            % nume_neg = cx*cos(thetaWheelRAW_neg) - cz*sin(thetaWheelRAW_neg);
+            % thetaWheelRAD2 = atan2(dom_neg, nume_neg);
+
+            thetaWheelRAD1 = thetaWheelRAW_pos;
+            thetaWheelRAD2 = thetaWheelRAW_neg;
+
         end
 
         thetaWheel_pos = thetaWheelRAD1 .* (180/pi);
