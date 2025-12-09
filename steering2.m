@@ -11,14 +11,17 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %-- Create ndgrid of variables --
-set1 = 10:1:100; %values for tie rod, t
-set2 = 10:1:70; %values for r/2
+set1 = 10:1:150; %values for tie rod, t
+set2 = 10:1:100; %values for r/2
 
 [set1, set2] = ndgrid(set1, set2);
 combinations = [set1(:), set2(:)];
 
 %steering angle in radians
-theta_vals = linspace(-10, 10, 21);
+ServoAngle = 25;
+
+StepSize = (2*ServoAngle) + 1;
+theta_vals = linspace(-(ServoAngle), ServoAngle, StepSize);
 
 
 num_cases = numel(set1);
@@ -38,7 +41,7 @@ for i = 1:numel(set1)
     rO2 = set2(i);
     
     h = 20; %servo arm length
-    cxComp = 9; %steering lever x component
+    cxComp = 12; %steering lever x component
     czComp = 10; %steering lever z component
 
     %Wheel Pivot Position
@@ -91,16 +94,12 @@ for i = 1:numel(set1)
             arg = T ./ R;
             arg = min(max(arg, -1), 1); % clamp to [-1,1]
             phi = atan2(beta, alpha); % correct quadrant
-            thetaWheelRAW_pos = phi + acos(arg);
-            thetaWheelRAW_neg = phi - acos(arg);
-
-            thetaWheelRAD1 = thetaWheelRAW_pos;
-            thetaWheelRAD2 = thetaWheelRAW_neg;
-
+            thetaWheelRAD_pos = phi + acos(arg);
+            thetaWheelRAD_neg = phi - acos(arg);
         end
 
-        thetaWheel_pos = thetaWheelRAD1 .* (180/pi);
-        thetaWheel_neg = thetaWheelRAD2 .* (180/pi);
+        thetaWheel_pos = thetaWheelRAD_pos .* (180/pi);
+        thetaWheel_neg = thetaWheelRAD_neg .* (180/pi);
 
         thetaWheel_vals_pos(p) = thetaWheel_pos;   % store output for positive acos
         thetaWheel_vals_neg(p) = thetaWheel_neg;   % store output for negative acos
@@ -113,33 +112,35 @@ for i = 1:numel(set1)
 
 end
 
-end_time = (toc())/60;
-disp(['finished calculations in time:' num2str(end_time) ' minutes'])
+end_time = toc();
+disp(['finished calculations in time:' num2str(end_time) ' seconds'])
 
 % -- Purge bad rows --
 %location of thetaS = 0
-[~, idxZero] = min(abs(theta_vals - 0));
+[~, idxZero] = min(abs(theta_vals));
 thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 
 %First pass variables
 max_upper_lim = 0.01;
 %Second pass variables
-max_jump = 7; % Max allowable jump between thetaWheel values in degrees
+max_jump = 5; % Max allowable jump between thetaWheel values in degrees
 %Third pass variables
-ackLim = 0; %min ackermann percentage
+ackLim = 20; %min ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
 % -- First Pass: Filter based on thetaIndex and thetaIndexLast conditions --
-cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) & ...
-                 (abs(output_pos(:, thetaIndex)) >= 0) & ...
-                 (output_pos(:, thetaIndexLast) < 0);
+cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) ...
+                 & (abs(output_pos(:, thetaIndex)) >= 0) ...
+                 & (output_pos(:, thetaIndexLast) < 0) ...
+                 & (output_pos(:, num_val + 1) > 0); 
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
-cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) & ...
-                 (abs(output_neg(:, thetaIndex)) >= 0) & ...
-                 (output_neg(:, thetaIndexLast) < 0);
+cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) ...
+                 & (abs(output_neg(:, thetaIndex)) >= 0) ...
+                 & (output_neg(:, thetaIndexLast) < 0) ...
+                 & (output_pos(:, num_val + 1) > 0);
 intermediate_neg = output_neg(cond_neg_pass1, :);
 
 disp(['Pass 1 complete. Pos cases: ', num2str(size(intermediate_pos, 1)), ', Neg cases: ', num2str(size(intermediate_neg, 1))]);
@@ -208,16 +209,21 @@ tempMatrix = zeros(Rows_pos, Cols_pos);
 validRowCount = 0;
 for rowIndex = 1:Rows_pos
     currentRow_pos = output_secondpass_pos(rowIndex, :);
-
-    %ackermann percentage check
-    thetaIn = currentRow_pos(num_val+1);
-    thetaOut = currentRow_pos(num_val + num_theta);
+    first_val = num_val+1;
+    last_val = num_val + num_theta;
+    
+    %ackermann percentage check between values
+    thetaIn = currentRow_pos(first_val);
+    thetaOut = currentRow_pos(last_val);
     percentAck = ((abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn)) .* 100;
+    
+    %check change in ackermann percentages
+    cond_percentAck = (percentAck >= ackLim);
 
     %Turning circle check
     Ds = 2 .* ((wb ./ sind(abs(thetaOut))) + rs);
 
-    if (percentAck > ackLim)
+    if (cond_percentAck)
         validRowCount = validRowCount + 1;
         tempMatrix(validRowCount, :) = currentRow_pos;
     end   
@@ -229,21 +235,27 @@ output_final_pos = tempMatrix(1:validRowCount, :);
 [Rows_neg, Cols_neg] = size(output_secondpass_neg);
 tempMatrix2 = zeros(Rows_neg, Cols_neg);
 validRowCount2 = 0;
+
 for rowIndex = 1:Rows_neg
     currentRow_neg = output_secondpass_neg(rowIndex, :);
+    first_val = num_val+1;
+    last_val = num_val + num_theta;
 
-    %ackermann percentage check
-    thetaIn = currentRow_neg(num_val+1);
-    thetaOut = currentRow_neg(num_val + num_theta);
+    % ackermann percentage check between values
+    thetaIn = currentRow_pos(first_val);
+    thetaOut = currentRow_pos(last_val);
     percentAck = ((abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn)) .* 100;
 
-    %Turning circle check
+    % check change in ackermann percentages
+    cond_percentAck = (percentAck >= ackLim);
+
+    % Turning circle check
     Ds = 2 .* ((wb ./ sind(abs(thetaOut))) + rs);
 
-    if (percentAck >= ackLim) 
+    if cond_percentAck
         validRowCount2 = validRowCount2 + 1;
         tempMatrix2(validRowCount2, :) = currentRow_neg;
-    end   
+    end
 end
 
 output_final_neg = tempMatrix2(1:validRowCount2, :);
