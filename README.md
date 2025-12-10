@@ -26,3 +26,4 @@ it does work but needs tuning
 
 write condition to check ackermann % on each angle and its corrisponding opposite angle, try not to hard code if possible
 
+fine tuning required very higher anti ackermann being notice, change filters and fine tune to find middle ground
