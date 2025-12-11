@@ -44,8 +44,7 @@ for i = 1:numel(set1)
     
     h = 40; %servo arm length
     cxComp = set3(i); %steering lever x component
-    czComp = cxComp;
-; %steering lever z component
+    czComp = cxComp; %steering lever z component
     %Wheel Pivot Position
     xp = xj - k; %x towards outside of car is positive
     zp = 0; %z towards rear of car is negative
@@ -124,13 +123,14 @@ midpoint = ceil(num_theta / 2);
 
 %First pass variables
 max_upper_lim = 0.01;
-min_lock = 20;
+min_lock = 10;
+min_multi = 0.9;
 %Second pass variables
 max_jump = 5;
 tollerance = 0.5;
 %Third pass variables
-ackLimLow = 0; %min ackermann percentage
-ackLimHigh = 100; %max ackermann percentage
+ackLimLow = 10; %min ackermann percentage
+ackLimHigh = 20; %max ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
@@ -139,16 +139,16 @@ cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) ...
                  & (abs(output_pos(:, thetaIndex)) >= 0) ...
                  & (output_pos(:, thetaIndexLast) < 0) ...
                  & (output_pos(:, thetaIndexFirst) > 0) ...
-                 & (abs(output_pos(:, thetaIndexLast)) >= min_lock) ...
-                 & (abs(output_pos(:, thetaIndexFirst)) >= min_lock*0); 
+                 & (abs(output_pos(:, thetaIndexLast)) >= min_lock*min_multi) ...
+                 & (abs(output_pos(:, thetaIndexFirst)) >= min_lock); 
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
 cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) ...
                  & (abs(output_neg(:, thetaIndex)) >= 0) ...
                  & (output_neg(:, thetaIndexLast) < 0) ...
                  & (output_pos(:, thetaIndexFirst) > 0) ...
-                 & (abs(output_neg(:, thetaIndexLast)) >= min_lock) ...
-                 & (abs(output_neg(:, thetaIndexFirst)) >= min_lock*0);
+                 & (abs(output_neg(:, thetaIndexLast)) >= min_lock*min_multi) ...
+                 & (abs(output_neg(:, thetaIndexFirst)) >= min_lock);
 intermediate_neg = output_neg(cond_neg_pass1, :);
 
 disp(['Pass 1 complete. Pos cases: ', num2str(size(intermediate_pos, 1)), ', Neg cases: ', num2str(size(intermediate_neg, 1))]);
