@@ -27,3 +27,8 @@ it does work but needs tuning
 write condition to check ackermann % on each angle and its corrisponding opposite angle, try not to hard code if possible
 
 fine tuning required very higher anti ackermann being notice, change filters and fine tune to find middle ground
+
+13/12
+seems to be almost there, outer wheel behaves as expected, gradual increase towards peak angle at lock
+inner wheel behaves not as expected and incorrectly, peaks mid sweep and gradually degreases towards lock, what is causing this is unknown, but changes to the direction and size of steering lever brings the most change, albiet small
+

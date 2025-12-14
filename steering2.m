@@ -11,12 +11,13 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %-- Create ndgrid of variables --
-set1 = 10:0.5:100; %values for tie rod, t
-set2 = 30:1:90; %values for r/2
-set3 = 15:1:25; %test cases for sqaure steering arm
+set1 = 50:1:100; %values for tie rod, t
+set2 = 40:1:80; %values for r/2
+set3 = 8:1:15; %test cases for sqaure steering arm
+set4 = 0:1:10; %configures
 
-[set1, set2, set3] = ndgrid(set1, set2, set3);
-combinations = [set1(:), set2(:), set3(:)];
+[set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
+combinations = [set1(:), set2(:), set3(:), set4(:)];
 
 %steering angle in degrees
 ServoAngle = 25; 
@@ -42,15 +43,17 @@ for i = 1:numel(set1)
     t = set1(i);
     rO2 = set2(i);
     
-    h = 40; %servo arm length
+    h = 10; %servo arm length
     cxComp = set3(i); %steering lever x component
+    con = set4(i); %configuration
+
     czComp = cxComp; %steering lever z component
     %Wheel Pivot Position
     xp = xj - k; %x towards outside of car is positive
     zp = 0; %z towards rear of car is negative
 
     cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
-    cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
+    cz = -(czComp  + con); %distance to wheel pivot from steering arm tie rod joint, z
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
@@ -111,7 +114,7 @@ for i = 1:numel(set1)
 end
 
 end_time = toc();
-disp(['finished calculations in time:' num2str(end_time) ' seconds'', Iterations skipped: ' num2str(skipcount)]);
+disp(['finished calculations in time:' num2str(end_time) ' seconds',' Iterations skipped: ' num2str(skipcount)]);
 
 % -- Purge bad rows --
 %location of thetaS = 0
@@ -122,12 +125,12 @@ thetaIndexFirst = num_val + 1;
 midpoint = ceil(num_theta / 2);
 
 %First pass variables
-max_upper_lim = 0.01;
+max_upper_lim = 0.1;
 min_lock = 10;
 min_multi = 0.9;
 %Second pass variables
-max_jump = 5;
-tollerance = 0.5;
+max_jump = 2.5;
+tollerance = 0.1;
 %Third pass variables
 ackLimLow = 10; %min ackermann percentage
 ackLimHigh = 20; %max ackermann percentage
@@ -196,10 +199,10 @@ for rowIndex = 1:Rows_neg
     cond_max_jump = all(abs(diff_neg) < max_jump);
 
     % For thetaS < 0 (first half of diffs), magnitude should be decreasing.
-    cond_mag_decreasing = all(diff_abs_pos(1:midpoint-1) <= tollerance);
+    cond_mag_decreasing = all(diff_abs_neg(1:midpoint-1) <= tollerance);
     
     % For thetaS > 0 (from midpoint onwards), magnitude should be increasing.
-    cond_mag_increasing = all(diff_abs_pos(midpoint:end) >= -tollerance);
+    cond_mag_increasing = all(diff_abs_neg(midpoint:end) >= -tollerance);
 
     if cond_max_jump && cond_mag_decreasing  && cond_mag_increasing
         validRowCount2 = validRowCount2 + 1;
@@ -220,7 +223,7 @@ for rowIndex = 1:Rows_pos
 
     %ackermann percentage check between values
     thetaIn = currentRow_pos(thetaIndexFirst);
-    thetaOut = currentRow_pos(thetaIndexFirst);
+    thetaOut = currentRow_pos(thetaIndexLast);
     percentAck = ((abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn)) .* 100;
     
     %check change in ackermann percentages
@@ -246,8 +249,8 @@ for rowIndex = 1:Rows_neg
     currentRow_neg = output_secondpass_neg(rowIndex, :);
 
     % ackermann percentage check between values
-    thetaIn = currentRow_pos(thetaIndexFirst);
-    thetaOut = currentRow_pos(thetaIndexFirst);
+    thetaIn = currentRow_neg(thetaIndexFirst);
+    thetaOut = currentRow_neg(thetaIndexLast);
     percentAck = ((abs(thetaIn) - abs(thetaOut)) ./ abs(thetaIn)) .* 100;
 
     % check change in ackermann percentages
