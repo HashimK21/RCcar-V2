@@ -32,3 +32,6 @@ fine tuning required very higher anti ackermann being notice, change filters and
 seems to be almost there, outer wheel behaves as expected, gradual increase towards peak angle at lock
 inner wheel behaves not as expected and incorrectly, peaks mid sweep and gradually degreases towards lock, what is causing this is unknown, but changes to the direction and size of steering lever brings the most change, albiet small
 
+varibale choices seem to be problematic, this will need to be adjusted and terms redfined to better conform to constraints, 
+
+make t - tie rod length calcualted while fixing the other variables. this is the most logical next step.
