@@ -82,20 +82,27 @@ for i = 1:numel(set1)
 
         % safe evaluation of acos argument and correct atan quadrant
         if R == 0
-            thetaWheelRAD = NaN;
+            thetaWheelRAD_pos = NaN;
+            thetaWheelRAD_neg = NaN;
         else
             arg = T ./ R;
             arg = min(max(arg, -1), 1); % clamp to [-1,1]
             phi = atan2(beta, alpha); % correct quadrant
-            thetaWheelRAD_pos = phi + acos(arg);
-            thetaWheelRAD_neg = phi - acos(arg);
+    
+            % Raw angles
+            thetaWheelRAD_pos_raw = phi + acos(arg);
+            thetaWheelRAD_neg_raw = phi - acos(arg);
+    
+            % UNWRAP both to [-180,180] principal range
+            thetaWheelRAD_pos = mod(thetaWheelRAD_pos_raw + pi, 2*pi) - pi;
+            thetaWheelRAD_neg = mod(thetaWheelRAD_neg_raw + pi, 2*pi) - pi;
         end
 
-        thetaWheel_pos = thetaWheelRAD_pos .* (180/pi);
-        thetaWheel_neg = thetaWheelRAD_neg .* (180/pi);
+        thetaWheel_pos = rad2deg(thetaWheelRAD_pos);
+        thetaWheel_neg = rad2deg(thetaWheelRAD_neg);
 
-        thetaWheel_vals_pos(p) = thetaWheel_pos;   % store output for positive acos
-        thetaWheel_vals_neg(p) = thetaWheel_neg;   % store output for negative acos
+        thetaWheel_vals_pos(p) = thetaWheel_pos;
+        thetaWheel_vals_neg(p) = thetaWheel_neg;
 
     end
 
@@ -115,6 +122,22 @@ thetaIndex = num_val + idxZero;
 thetaIndexLast = num_val + num_theta;
 thetaIndexFirst = num_val + 1;
 midpoint = ceil(num_theta / 2);
+
+% Add after calculation loop, before purging:
+fprintf('Checking first 10 rows for Pass 1 criteria:\n');
+for i = 1:min(10, num_cases)
+    theta0_pos = output_pos(i, thetaIndex);
+    theta_first_pos = output_pos(i, thetaIndexFirst);
+    theta_last_pos = output_pos(i, thetaIndexLast);
+    
+    theta0_neg = output_neg(i, thetaIndex);
+    theta_first_neg = output_neg(i, thetaIndexFirst);
+    theta_last_neg = output_neg(i, thetaIndexLast);
+    
+    fprintf('Row %d: Pos[0]=%.2f, First=%.1f, Last=%.1f | Neg[0]=%.2f, First=%.1f, Last=%.1f\n', ...
+        i, theta0_pos, theta_first_pos, theta_last_pos, theta0_neg, theta_first_neg, theta_last_neg);
+end
+
 
 %First pass variables
 max_upper_lim = 0.1;
@@ -142,7 +165,7 @@ intermediate_pos = output_pos(cond_pos_pass1, :);
 cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) ...
                  & (abs(output_neg(:, thetaIndex)) >= 0) ...
                  & (output_neg(:, thetaIndexLast) < 0) ...
-                 & (output_pos(:, thetaIndexFirst) > 0) ...
+                 & (output_neg(:, thetaIndexFirst) > 0) ...
                  & (abs(output_neg(:, thetaIndexLast)) <= abs(output_neg(:, thetaIndexFirst))) ...
                  & (abs(output_neg(:, thetaIndexFirst)) <= 45) ...
                  & (abs(output_neg(:, thetaIndexLast)) >= min_lock) ...
@@ -278,13 +301,14 @@ header_line = strjoin(headers, ',');
 fprintf(fid, '%s\n', header_line);
 
 % -- write matrix --
-[rows, cols] = size(output_final_pos);
+%[rows, cols] = size(output_final_pos);
+[rows, cols] = size(output_pos);
 %[rows, cols] = size(intermediate_pos);
 %[rows, cols] = size(output_secondpass_pos);
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
-        fprintf(fid, fmt, output_final_pos(r, :));
+        fprintf(fid, fmt, output_pos(r, :));
     end
 end
 fclose(fid);
@@ -293,14 +317,15 @@ fid2 = fopen('steering_neg.csv', 'w');
 header_line = strjoin(headers, ',');
 fprintf(fid2, '%s\n', header_line);
 
-[rows, cols] = size(output_final_neg);
+%[rows, cols] = size(output_final_neg);
+[rows, cols] = size(output_neg);
 %[rows, cols] = size(intermediate_neg);
 %[rows, cols] = size(output_secondpass_neg);
 
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
-        fprintf(fid2, fmt, output_final_neg(r, :));
+        fprintf(fid2, fmt, output_neg(r, :));
     end
 end
 fclose(fid2);
