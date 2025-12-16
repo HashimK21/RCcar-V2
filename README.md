@@ -35,3 +35,10 @@ inner wheel behaves not as expected and incorrectly, peaks mid sweep and gradual
 varibale choices seem to be problematic, this will need to be adjusted and terms redfined to better conform to constraints, 
 
 make t - tie rod length calcualted while fixing the other variables. this is the most logical next step.
+
+14/12
+current behaviour, outer wheel behaves predictably in most cases, large jumps but could probably be tuned, inner wheel does not behave in predictable manner, it reaches a quick peak mid sweep then reduces towards end of sweep. problem unknown, any change to steering lever appears to do nothing. acts like none will work. lots of anti-ackermann
+
+15/12
+
+mixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses

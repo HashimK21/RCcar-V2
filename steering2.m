@@ -11,10 +11,11 @@ rs = 4.97; %scrub radius
 xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
 
 %-- Create ndgrid of variables --
-set1 = 50:1:100; %values for tie rod, t
-set2 = 40:1:80; %values for r/2
-set3 = 8:1:15; %test cases for sqaure steering arm
-set4 = 0:1:10; %configures
+set1 = 25:1:60; %values for rack offset from front axel
+set2 = 45:1:80; %values for r/2
+set3 = 8:1:15; %steering arm offset from pivot 
+set4 = -3:1:8; %differing of size
+
 
 [set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
 combinations = [set1(:), set2(:), set3(:), set4(:)];
@@ -40,20 +41,23 @@ tic();
 skipcount = 0;
 
 for i = 1:numel(set1)
-    t = set1(i);
+    zr = -set1(i);
     rO2 = set2(i);
-    
-    h = 10; %servo arm length
-    cxComp = set3(i); %steering lever x component
-    con = set4(i); %configuration
+    h = 30; %servo arm length
 
-    czComp = cxComp; %steering lever z component
+    cxComp = set3(i); %steering lever x component
+    czComp = cxComp + set4(i); %steering lever z component
     %Wheel Pivot Position
     xp = xj - k; %x towards outside of car is positive
     zp = 0; %z towards rear of car is negative
 
     cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
-    cz = -(czComp  + con); %distance to wheel pivot from steering arm tie rod joint, z
+    cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
+
+    %calculating tie rod length, t
+    tx = (xp + cx - rO2)^2;
+    tz = (zp + cz - zr)^2;
+    t = sqrt(tx + tz);
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
@@ -63,18 +67,6 @@ for i = 1:numel(set1)
         %finding rack displacement
         Delx = h .* sind(thetaS);
         xr = Delx + rO2;
-
-        %Finding zr position
-        zr_pos_branch = zp + cz + sqrt((t^2) - ((xp + cx - rO2)^2));
-        zr_neg_branch = zp + cz - sqrt((t^2) - ((xp + cx - rO2)^2));
-
-        if (zr_neg_branch < 0) && (zr_pos_branch >= 0)
-            zr = zr_neg_branch;
-        elseif (zr_pos_branch < 0) && (zr_neg_branch >= 0)
-            zr = zr_pos_branch;
-        else
-            zr = NaN;
-        end
 
         %Wheel angle
         dx = xp - xr;
@@ -126,14 +118,13 @@ midpoint = ceil(num_theta / 2);
 
 %First pass variables
 max_upper_lim = 0.1;
-min_lock = 10;
-min_multi = 0.9;
+min_lock = 20;
 %Second pass variables
-max_jump = 2.5;
-tollerance = 0.1;
+max_jump = 10000;
+tollerance = 10000;
 %Third pass variables
-ackLimLow = 10; %min ackermann percentage
-ackLimHigh = 20; %max ackermann percentage
+ackLimLow = 0; %min ackermann percentage
+ackLimHigh = 100; %max ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 
@@ -142,7 +133,9 @@ cond_pos_pass1 = (abs(output_pos(:, thetaIndex)) <= max_upper_lim) ...
                  & (abs(output_pos(:, thetaIndex)) >= 0) ...
                  & (output_pos(:, thetaIndexLast) < 0) ...
                  & (output_pos(:, thetaIndexFirst) > 0) ...
-                 & (abs(output_pos(:, thetaIndexLast)) >= min_lock*min_multi) ...
+                 & (abs(output_pos(:, thetaIndexLast)) <= abs(output_pos(:, thetaIndexFirst))) ...
+                 & (abs(output_pos(:, thetaIndexFirst)) <= 45) ...
+                 & (abs(output_pos(:, thetaIndexLast)) >= min_lock) ...
                  & (abs(output_pos(:, thetaIndexFirst)) >= min_lock); 
 intermediate_pos = output_pos(cond_pos_pass1, :);
 
@@ -150,7 +143,9 @@ cond_neg_pass1 = (abs(output_neg(:, thetaIndex)) <= max_upper_lim) ...
                  & (abs(output_neg(:, thetaIndex)) >= 0) ...
                  & (output_neg(:, thetaIndexLast) < 0) ...
                  & (output_pos(:, thetaIndexFirst) > 0) ...
-                 & (abs(output_neg(:, thetaIndexLast)) >= min_lock*min_multi) ...
+                 & (abs(output_neg(:, thetaIndexLast)) <= abs(output_neg(:, thetaIndexFirst))) ...
+                 & (abs(output_neg(:, thetaIndexFirst)) <= 45) ...
+                 & (abs(output_neg(:, thetaIndexLast)) >= min_lock) ...
                  & (abs(output_neg(:, thetaIndexFirst)) >= min_lock);
 intermediate_neg = output_neg(cond_neg_pass1, :);
 
@@ -267,7 +262,7 @@ end
 
 output_final_neg = tempMatrix2(1:validRowCount2, :);
 
-disp(['Pass 3 complete. Final pos cases: ', num2str(size(output_final_pos, 1)), ', Final neg cases: ', num2str(size(output_final_neg, 1))]);
+disp(['Pass 3 complete. Pos cases: ', num2str(size(output_final_pos, 1)), ', Neg cases: ', num2str(size(output_final_neg, 1))]);
 
 % -- Build header row --
 thetaWheel_headers = cell(1, num_theta);
@@ -284,6 +279,8 @@ fprintf(fid, '%s\n', header_line);
 
 % -- write matrix --
 [rows, cols] = size(output_final_pos);
+%[rows, cols] = size(intermediate_pos);
+%[rows, cols] = size(output_secondpass_pos);
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
@@ -297,6 +294,9 @@ header_line = strjoin(headers, ',');
 fprintf(fid2, '%s\n', header_line);
 
 [rows, cols] = size(output_final_neg);
+%[rows, cols] = size(intermediate_neg);
+%[rows, cols] = size(output_secondpass_neg);
+
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
