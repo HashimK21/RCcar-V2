@@ -42,3 +42,5 @@ current behaviour, outer wheel behaves predictably in most cases, large jumps bu
 15/12
 
 mixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
+
+potentially try zr, cz +

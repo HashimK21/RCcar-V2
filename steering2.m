@@ -8,12 +8,10 @@ tireW = 34; %tire width
 k = -6.93; %offset for KPI mid point projection
 rs = 4.97; %scrub radius
 
-xj = (tw/2) - (tireW/2); %tire wall, used to place sus joints
-
 %-- Create ndgrid of variables --
-set1 = 25:1:60; %values for rack offset from front axel
-set2 = 45:1:80; %values for r/2
-set3 = 8:1:15; %steering arm offset from pivot 
+set1 = 20:1:75; %values for rack offset from front axel, zr
+set2 = 30:1:80; %values for r/2
+set3 = 6:1:12; %steering arm offset from pivot 
 set4 = -3:1:8; %differing of size
 
 
@@ -37,19 +35,19 @@ output_neg = zeros(num_cases, num_val + num_theta);
 
 disp('created ndgrid and output matrix')
 
+h = 30; 
+xj = (tw/2) - (tireW/2); 
+xp = xj - k; zp = 0;
+
 tic();
 skipcount = 0;
 
 for i = 1:numel(set1)
     zr = -set1(i);
     rO2 = set2(i);
-    h = 30; %servo arm length
 
     cxComp = set3(i); %steering lever x component
     czComp = cxComp + set4(i); %steering lever z component
-    %Wheel Pivot Position
-    xp = xj - k; %x towards outside of car is positive
-    zp = 0; %z towards rear of car is negative
 
     cx = -(cxComp); %distance to wheel pivot from steering arm tie rod joint, x
     cz = -(czComp); %distance to wheel pivot from steering arm tie rod joint, z
@@ -57,13 +55,22 @@ for i = 1:numel(set1)
     %calculating tie rod length, t
     tx = (xp + cx - rO2)^2;
     tz = (zp + cz - zr)^2;
-    t = sqrt(tx + tz);
+    t = (sqrt(tx + tz)) .* 1.02;
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
+    test_arg = zeros(1, num_theta);
+    test_R = zeros(1, num_theta);
+    test_T = zeros(1, num_theta);
+    test_phi = zeros(1, num_theta);
+    Delx_test = zeros(1, num_theta);
+    xr_test = zeros(1, num_theta);
+    alpha_test = zeros(1, num_theta);
+    beta_test = zeros(1, num_theta);
+    
     for p = 1:numel(theta_vals)
         thetaS = theta_vals(p);
-        %thetaS = 0;
+        
         %finding rack displacement
         Delx = h .* sind(thetaS);
         xr = Delx + rO2;
@@ -103,12 +110,28 @@ for i = 1:numel(set1)
 
         thetaWheel_vals_pos(p) = thetaWheel_pos;
         thetaWheel_vals_neg(p) = thetaWheel_neg;
+        test_arg(p) = arg;
+        test_R(p) = R;
+        test_T(p) = T;
+        test_phi(p) = phi;
+        Delx_test(p) = Delx;
+        xr_test(p) = xr;
+        alpha_test(p) = alpha;
+        beta_test(p) = beta;
 
     end
 
         % One row per case: 5 constants + values for angle dependants
         output_pos(i, :) = [h, t, rO2, zr, cx, cz, thetaWheel_vals_pos];
         output_neg(i, :) = [h, t, rO2, zr, cx, cz, thetaWheel_vals_neg];
+        output_arg(i, :) = [h, t, rO2, zr, cx, cz, test_arg];
+        output_R(i, :) = [h, t, rO2, zr, cx, cz, test_R];
+        output_T(i, :) = [h, t, rO2, zr, cx, cz, test_T];
+        output_phi(i, :) = [h, t, rO2, zr, cx, cz, test_phi];
+        output_DelX(i, :) = [h, t, rO2, zr, cx, cz, Delx_test];
+        output_xr(i, :) = [h, t, rO2, zr, cx, cz, xr_test];
+        output_alpha(i, :) = [h, t, rO2, zr, cx, cz, alpha_test];
+        output_beta(i, :) = [h, t, rO2, zr, cx, cz, beta_test];
 
 end
 
@@ -123,28 +146,12 @@ thetaIndexLast = num_val + num_theta;
 thetaIndexFirst = num_val + 1;
 midpoint = ceil(num_theta / 2);
 
-% Add after calculation loop, before purging:
-fprintf('Checking first 10 rows for Pass 1 criteria:\n');
-for i = 1:min(10, num_cases)
-    theta0_pos = output_pos(i, thetaIndex);
-    theta_first_pos = output_pos(i, thetaIndexFirst);
-    theta_last_pos = output_pos(i, thetaIndexLast);
-    
-    theta0_neg = output_neg(i, thetaIndex);
-    theta_first_neg = output_neg(i, thetaIndexFirst);
-    theta_last_neg = output_neg(i, thetaIndexLast);
-    
-    fprintf('Row %d: Pos[0]=%.2f, First=%.1f, Last=%.1f | Neg[0]=%.2f, First=%.1f, Last=%.1f\n', ...
-        i, theta0_pos, theta_first_pos, theta_last_pos, theta0_neg, theta_first_neg, theta_last_neg);
-end
-
-
 %First pass variables
 max_upper_lim = 0.1;
 min_lock = 20;
 %Second pass variables
-max_jump = 10000;
-tollerance = 10000;
+max_jump = 7;
+tollerance = 1;
 %Third pass variables
 ackLimLow = 0; %min ackermann percentage
 ackLimHigh = 100; %max ackermann percentage
@@ -301,14 +308,14 @@ header_line = strjoin(headers, ',');
 fprintf(fid, '%s\n', header_line);
 
 % -- write matrix --
-%[rows, cols] = size(output_final_pos);
-[rows, cols] = size(output_pos);
+[rows, cols] = size(output_final_pos);
+%[rows, cols] = size(output_pos);
 %[rows, cols] = size(intermediate_pos);
 %[rows, cols] = size(output_secondpass_pos);
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
-        fprintf(fid, fmt, output_pos(r, :));
+        fprintf(fid, fmt, output_final_pos(r, :));
     end
 end
 fclose(fid);
@@ -317,18 +324,122 @@ fid2 = fopen('steering_neg.csv', 'w');
 header_line = strjoin(headers, ',');
 fprintf(fid2, '%s\n', header_line);
 
-%[rows, cols] = size(output_final_neg);
-[rows, cols] = size(output_neg);
+[rows, cols] = size(output_final_neg);
+%[rows, cols] = size(output_neg);
 %[rows, cols] = size(intermediate_neg);
 %[rows, cols] = size(output_secondpass_neg);
 
 if rows > 0
     fmt = [repmat('%g,', 1, cols-1) '%g\n'];
     for r = 1:rows
-        fprintf(fid2, fmt, output_neg(r, :));
+        fprintf(fid2, fmt, output_final_neg(r, :));
     end
 end
 fclose(fid2);
+
+fid3 = fopen('steering_arg.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid3, '%s\n', header_line);
+
+[rows, cols] = size(output_arg);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid3, fmt, output_arg(r, :));
+    end
+end
+fclose(fid3);
+
+fid4 = fopen('steering_R.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid4, '%s\n', header_line);
+
+[rows, cols] = size(output_R);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid4, fmt, output_R(r, :));
+    end
+end
+fclose(fid4);
+
+fid5 = fopen('steering_T.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid5, '%s\n', header_line);
+
+[rows, cols] = size(output_T);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid5, fmt, output_T(r, :));
+    end
+end
+fclose(fid5);
+
+fid6 = fopen('steering_phi.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid6, '%s\n', header_line);
+
+[rows, cols] = size(output_phi);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid6, fmt, output_phi(r, :));
+    end
+end
+fclose(fid6);
+
+fid7 = fopen('steering_DelX.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid7, '%s\n', header_line);
+
+[rows, cols] = size(output_DelX);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid7, fmt, output_DelX(r, :));
+    end
+end
+fclose(fid7);
+
+fid8 = fopen('steering_xr.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid8, '%s\n', header_line);
+
+[rows, cols] = size(output_xr);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid8, fmt, output_xr(r, :));
+    end
+end
+fclose(fid8);
+
+fid9 = fopen('steering_alpha.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid9, '%s\n', header_line);
+
+[rows, cols] = size(output_alpha);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid9, fmt, output_alpha(r, :));
+    end
+end
+fclose(fid9);
+
+fid10 = fopen('steering_beta.csv', 'w');
+header_line = strjoin(headers, ',');
+fprintf(fid10, '%s\n', header_line);
+
+[rows, cols] = size(output_beta);
+if rows > 0
+    fmt = [repmat('%g,', 1, cols-1) '%g\n'];
+    for r = 1:rows
+        fprintf(fid10, fmt, output_beta(r, :));
+    end
+end
+fclose(fid10);
 
 disp('Print to CSV')
 
