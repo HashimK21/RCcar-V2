@@ -40,7 +40,7 @@ yRcheck = (((y1 - hr) ./ (l - n)) .* (xR - n)) + hr;
 
 %Roll Centre location
 xRCnum = (tw/2) .* ((yL .* (xR - (tw/2))) + (yR .* (xL + (tw/2))));
-xRCdom = (yR .* (xL + (tw/2))) - (yL .* (xR - (tw/2);
+xRCdom = (yR .* (xL + (tw/2))) - (yL .* (xR - (tw/2)));
 xRC = xRCnum ./ xRCdom;
 
 yRC = (yR ./ (xR - (tw/2))) .* (xRC - (tw/2));
@@ -60,7 +60,7 @@ CGheight = hr + clearance + batteryHeight;
 CGpCent = (CGheight/100)*30;
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
-        & (abs(xRC) >= 0) & (yRC >= CGpCent)
+             & (abs(xRC) >= 0) & (yRC >= CGpCent)
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);

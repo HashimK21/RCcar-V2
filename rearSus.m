@@ -60,7 +60,7 @@ CGheight = hr + clearance + batteryHeight;
 CGpCent = (CGheight/100)*15;
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
-        & (abs(xRC) >= 0) & (yRC >= CGpCent)
+             & (abs(xRC) >= 0) & (yRC >= CGpCent)
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
