@@ -44,3 +44,11 @@ current behaviour, outer wheel behaves predictably in most cases, large jumps bu
 mixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
 
 potentially try zr, cz +
+
+
+
+Suspension notes:
+- front sus and rear sus codes produce expected results, bug seen in CarV1 is present, can be debugged but isnt damaging to results given. 
+- potentially move calculations into for loop to make filtering more simple
+
+estimated time to results, 2 - 3 days of work

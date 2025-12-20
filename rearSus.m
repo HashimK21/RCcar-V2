@@ -1,5 +1,7 @@
 clc
 
+tic();
+
 tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
@@ -60,7 +62,7 @@ CGheight = hr + clearance + batteryHeight;
 CGpCent = (CGheight/100)*15;
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
-             & (abs(xRC) >= 0) & (yRC >= CGpCent)
+             & (abs(xRC) >= 0) & (yRC >= CGpCent);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
@@ -95,4 +97,7 @@ fprintf(fileID, '%s\n', columnLabels{end});
 csvwrite('rear_data.csv', combinedData, '-append', 'delimiter', ',');
 fclose(fileID);
 
-disp('done')
+endtime = toc();
+
+disp(['Done, Time taken: ' num2str(endtime) ' seconds.'])
+

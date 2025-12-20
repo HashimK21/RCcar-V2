@@ -1,5 +1,7 @@
 clc
 
+tic();
+
 tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
@@ -34,6 +36,7 @@ yLcheck = ((-(y1 - hr) .* (xL + n)) ./ (l - n)) + hr;
 
 xRnum = (sumh .* (l - n) .* (u - m)) - (m .* (y2 - sumh) .* (l - n)) - (hr .* (u - m) .* (l - n)) + (n .* (y1 - hr) .* (u - m));
 xRdom = ((y1 - hr) .* (u - m)) - ((y2 - sumh) .* (l - n));
+xR = xRnum ./ xRdom;
 
 yR = (((y2 - sumh) ./ (u - m)) .* (xR - m)) + sumh;
 yRcheck = (((y1 - hr) ./ (l - n)) .* (xR - n)) + hr;
@@ -60,7 +63,7 @@ CGheight = hr + clearance + batteryHeight;
 CGpCent = (CGheight/100)*30;
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
-             & (abs(xRC) >= 0) & (yRC >= CGpCent)
+             & (abs(xRC) >= 0) & (yRC >= CGpCent);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
@@ -86,10 +89,14 @@ columnLabels = {'yRC', 'xRC', 'Upper Beam', 'Lower Beam',...
 combinedData = [s_yRC(:), s_xRC(:), s_m(:), s_n(:), s_hr(:), s_hf(:), ...
                 s_sumh(:), s_xL(:), s_yL(:), s_xR(:), s_yR(:),...
                 s_thetau(:), s_u(:), s_alpha(:), s_l(:)];
-fileID = fopen('rear_data.csv', 'w');
+fileID = fopen('front_data.csv', 'w');
 fprintf(fileID, '%s,', columnLabels{1:end-1});
 fprintf(fileID, '%s\n', columnLabels{end});
-csvwrite('rear_data.csv', combinedData, '-append', 'delimiter', ',');
+csvwrite('front_data.csv', combinedData, '-append', 'delimiter', ',');
 fclose(fileID);
+
+endtime = toc();
+
+disp(['Done, Time taken: ' num2str(endtime) ' seconds.'])
 
 
