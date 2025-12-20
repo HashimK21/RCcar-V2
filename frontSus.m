@@ -60,7 +60,7 @@ low = (l - n)./cosd(alpha);
 clearance = 5; %for material and design
 batteryHeight = 35/2; %half of battery height
 CGheight = hr + clearance + batteryHeight;
-CGpCent = (CGheight/100)*30;
+CGpCent = (CGheight*0.3);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
              & (abs(xRC) >= 0) & (yRC >= CGpCent);

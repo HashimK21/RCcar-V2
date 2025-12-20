@@ -6,24 +6,25 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 tireW = 42; %tire width
-y1 = 25; %ground to lower sus mount
-y2 = tireD - 25; %ground to upper sus mount
+y1 = 8; %ground to lower sus mount
+xj = (tw/2) - (tireW/2) - 6; %position of upper and lower joints x, offset to allow bolt to be outside of wheel
 
-xj = (tw/2) - (tireW/2); %position of upper and lower joints x
+set1 = 22:1:60; %range of values for m, upper chassis beam
+set2 = 22:1:60; %range of values for n, lower chassis beam
+set3 = 14:1:16; %range of values for hr
+set4 = 30:2:80; %range of values for hf
+set5 = 4:2:20; %range of values for y2 offset from wheel top
 
-set1 = 11.5:2:30; %range of values for m, upper chassis beam
-set2 = 11.5:2:30; %range of values for n, lower chassis beam
-set3 = 7:1:30; %range of values for hr
-set4 = 7:1:20; %range of values for hf
 
-[set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
-combinations = [set1(:), set2(:), set3(:), set4(:)];
+[set1, set2, set3, set4, set5] = ndgrid(set1, set2, set3, set4, set5);
+combinations = [set1(:), set2(:), set3(:), set4(:), set5(:)];
 
 m = set1(:);
 n = set2(:);
 hr = set3(:);
 hf = set4(:);
 sumh = hr + hf;
+y2 = tireD - set5(:); %ground to upper sus mount
 
 %IC location
 xLnum = (hr.*(xj - n).*(xj - m)) - (n.*(y1 - hr).*(xj - m)) - (sumh.*(xj - n).*(xj - m)) + (m.*(y2 - sumh).*(xj - n));
@@ -56,13 +57,15 @@ alpha = atand((hr - y1)./(xj - n));
 l = (xj - n)./cosd(alpha);
 
 %sorting
-clearance = 5; %for material and design
+clearance = 7; %for material and design
 batteryHeight = 35/2; %half of battery height
 CGheight = hr + clearance + batteryHeight;
-CGpCent = (CGheight/100)*15;
+CGpCent_low = (CGheight*0.1);
+CGpCent_high = (CGheight*0.5);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
-             & (abs(xRC) >= 0) & (yRC >= CGpCent);
+             & (abs(xRC) >= 0) & (yRC >= CGpCent_low) & (yRC <= CGpCent_high) ...
+             & (xR > 0) & (xR >= ((tw/2)*0.15)) & (xR <= ((tw/2)*0.4));
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
@@ -71,6 +74,7 @@ s_n = n(index_sort);
 s_hr = hr(index_sort);
 s_hf = hf(index_sort);
 s_sumh = sumh(index_sort);
+s_y2 = y2(index_sort);
 s_xL = xL(index_sort);
 s_yL = yL(index_sort);
 s_xR = xR(index_sort);
@@ -85,11 +89,11 @@ s_l = l(index_sort);
 
 %print sorted data to csv
 columnLabels = {'yRC', 'xRC', 'Upper_Beam', 'Lower_Beam',...
-                'Ride', 'Frame_Height', 'Frame_h_ground',...
+                'Ride', 'Frame_Height', 'Frame_h_ground', 'y2',...
                 'xL', 'yL', 'xR', 'yR', 'Upper_arm_angle',...
                 'Upper_arm_length', 'Lower_arm_angle', 'Lower_arm_length'};
 combinedData = [s_yRC(:), s_xRC(:), s_m(:), s_n(:), s_hr(:), s_hf(:), ...
-                s_sumh(:), s_xL(:), s_yL(:), s_xR(:), s_yR(:),...
+                s_sumh(:), s_y2(:), s_xL(:), s_yL(:), s_xR(:), s_yR(:),...
                 s_thetau(:), s_u(:), s_alpha(:), s_l(:)];
 fileID = fopen('rear_data.csv', 'w');
 fprintf(fileID, '%s,', columnLabels{1:end-1});
