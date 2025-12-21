@@ -6,14 +6,14 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 tireW = 42; %tire width
-y1 = 8; %ground to lower sus mount
+y1 = 16; %ground to lower sus mount
 xj = (tw/2) - (tireW/2) - 6; %position of upper and lower joints x, offset to allow bolt to be outside of wheel
 
-set1 = 22:1:60; %range of values for m, upper chassis beam
-set2 = 22:1:60; %range of values for n, lower chassis beam
-set3 = 14:1:16; %range of values for hr
-set4 = 30:2:80; %range of values for hf
-set5 = 4:2:20; %range of values for y2 offset from wheel top
+set1 = 50:1:60; %range of values for m, upper chassis beam
+set2 = 50:1:70; %range of values for n, lower chassis beam
+set3 = 16:1:18; %range of values for hr
+set4 = 50:2:80; %range of values for hf
+set5 = 10:2:20; %range of values for y2 offset from wheel top
 
 
 [set1, set2, set3, set4, set5] = ndgrid(set1, set2, set3, set4, set5);
@@ -60,12 +60,12 @@ l = (xj - n)./cosd(alpha);
 clearance = 7; %for material and design
 batteryHeight = 35/2; %half of battery height
 CGheight = hr + clearance + batteryHeight;
-CGpCent_low = (CGheight*0.1);
-CGpCent_high = (CGheight*0.5);
+CGpCent_low = (CGheight*0.2);
+CGpCent_high = (CGheight*0.205);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
              & (abs(xRC) >= 0) & (yRC >= CGpCent_low) & (yRC <= CGpCent_high) ...
-             & (xR > 0) & (xR >= ((tw/2)*0.15)) & (xR <= ((tw/2)*0.4));
+             & (xL >= (tw*0.85)) & (xL <= (tw*1.5)) & (alpha < 2) & (thetau < 9);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
@@ -84,16 +84,17 @@ s_u = u(index_sort);
 s_alpha = alpha(index_sort);
 s_l = l(index_sort);
 
+s_y1 = (y1 * ones(size(s_y2)));
 
-%reliable_COG35 = (COG35 * ones(size(targetRC)));
 
 %print sorted data to csv
 columnLabels = {'yRC', 'xRC', 'Upper_Beam', 'Lower_Beam',...
-                'Ride', 'Frame_Height', 'Frame_h_ground', 'y2',...
+                'Ride', 'Frame_Height', 'Frame_h_ground', 'y1', 'y2',...
                 'xL', 'yL', 'xR', 'yR', 'Upper_arm_angle',...
                 'Upper_arm_length', 'Lower_arm_angle', 'Lower_arm_length'};
+
 combinedData = [s_yRC(:), s_xRC(:), s_m(:), s_n(:), s_hr(:), s_hf(:), ...
-                s_sumh(:), s_y2(:), s_xL(:), s_yL(:), s_xR(:), s_yR(:),...
+                s_sumh(:), s_y1(:), s_y2(:), s_xL(:), s_yL(:), s_xR(:), s_yR(:),...
                 s_thetau(:), s_u(:), s_alpha(:), s_l(:)];
 fileID = fopen('rear_data.csv', 'w');
 fprintf(fileID, '%s,', columnLabels{1:end-1});
