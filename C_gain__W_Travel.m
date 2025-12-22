@@ -80,8 +80,8 @@ for row_idx = 1:size(values_data, 1)
         dx = n + ((l - od).*cosd(theta)) - ((y1-hr).*sind(theta)); %x rotation
         dy = hr + ((l - od).*sind(theta)) + ((y1-hr).*cosd(theta)); %y rotation
 
-        dxf = (l - od) + (d.*(cosd(thetad)));
-        dyf = y1 + (d.*(sind(thetad)));
+        dxf = (n + l - od) + (d.*(sind(thetad)));
+        dyf = y1 + (d.*(cosd(thetad)));
 
         %rotaion limitations
         distLim = sqrt((Lx - Ux).^2 + (Ly - Uy).^2);
