@@ -41,7 +41,7 @@ current behaviour, outer wheel behaves predictably in most cases, large jumps bu
 
 15/12
 
-mixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
+fixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
 
 potentially try zr, cz +
 
@@ -52,3 +52,6 @@ Suspension notes:
 - potentially move calculations into for loop to make filtering more simple
 
 estimated time to results, 2 - 3 days of work
+
+22/12
+perhaps slight bug in calculations
