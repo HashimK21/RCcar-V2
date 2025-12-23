@@ -3,16 +3,32 @@ clc
 
 tic();
 
-clear
-clc
-
-tic();
-
 %pull values from csv
 values_data = dlmread('rear_data.csv', ',', 2, 0);
 %values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
 
-all_results = {};
+sweep = 15;
+
+% Generate headers for the final format
+constant_headers = {'m', 'n', 'l', 'u', 'hr', 'sumh', 'y1', 'y2'};
+dynamic_headers = {};
+for i = 0:sweep
+    dynamic_headers{end+1} = ['theta_', num2str(i)];
+end
+for i = 0:sweep
+    dynamic_headers{end+1} = ['alpha_', num2str(i)];
+end
+headers = [constant_headers, dynamic_headers];
+header_line = strjoin(headers, ',');
+
+% Write headers to a clean file
+fid = fopen('c_gain_rear.csv', 'w');
+if fid == -1
+    error('Cannot open file for writing.');
+end
+fprintf(fid, '%s\n', header_line);
+fclose(fid);
+
 
 for row_idx = 1:size(values_data, 1)
     values = values_data(row_idx, :);
@@ -37,17 +53,6 @@ for row_idx = 1:size(values_data, 1)
 
     deltay = y2 - y1;
 
-    % --- Print distLim at theta=0, alpha=0 for current row ---
-    theta_zero = 0;
-    alpha_zero = 0;
-    Lx_zero = n + (l.*cosd(theta_zero)) - ((y1-hr).*sind(theta_zero));
-    Ly_zero = hr + (l.*sind(theta_zero)) + ((y1-hr).*cosd(theta_zero));
-    Ux_zero = m + (u.*cosd(alpha_zero)) - ((y2-sumh).*sind(alpha_zero));
-    Uy_zero = sumh + (u.*sind(alpha_zero)) + ((y2-sumh).*cosd(alpha_zero));
-    distLim_at_zero = sqrt((Lx_zero - Ux_zero).^2 + (Ly_zero - Uy_zero).^2);
-    fprintf('CSV Row %d: distLim at theta=0, alpha=0 is %f\n', row_idx, distLim_at_zero);
-    % --- End of print block ---
-
     %od = 40; %for front
     od = 10; %for rear
 
@@ -57,74 +62,121 @@ for row_idx = 1:size(values_data, 1)
     thetad = 110; %angle of damper anticlockwise from x axis
 
     %set theta and alpha (angles for arm rotation)
-    set1 = 0:1:15;
-    set2 = 0:0.25:15;
+    set1 = 0:1:sweep;
+    set2 = 0:0.25:sweep;
 
-    [theta_grid, alpha_grid] = ndgrid(set1, set2);
-    
     valid_combinations = [];
 
-    for i = 1:numel(theta_grid)
-        theta = theta_grid(i);
-        alpha = alpha_grid(i);
-
-        %lower arm rotaion
-        Lx = n + (l.*cosd(theta)) - ((y1-hr).*sind(theta));
-        Ly = hr + (l.*sind(theta)) + ((y1-hr).*cosd(theta));
-
-        %upper arm rotation
-        Ux = m + (u.*cosd(alpha)) - ((y2-sumh).*sind(alpha));
-        Uy = sumh + (u.*sind(alpha)) + ((y2-sumh).*cosd(alpha));
-
-        %damper base rotation
-        dx = n + ((l - od).*cosd(theta)) - ((y1-hr).*sind(theta)); %x rotation
-        dy = hr + ((l - od).*sind(theta)) + ((y1-hr).*cosd(theta)); %y rotation
-
-        dxf = (n + l - od) + (d.*(sind(thetad)));
-        dyf = y1 + (d.*(cosd(thetad)));
-
-        %rotaion limitations
-        distLim = sqrt((Lx - Ux).^2 + (Ly - Uy).^2);
-        dcomp = sqrt(((dxf - dx).^2) + ((dyf - dy).^2));
-
-        %tolerances for checks
-        tol_dist = 1;
-
-        %Filter valid combinations
-        is_close = abs(distLim - deltay) <= tol_dist;
-        is_ok_dcomp = (dcomp >= dcompFull) & (dcomp <= d);
+    for theta = set1
+        best_alpha = NaN;
+        min_dist_error = inf;
         
-        if is_close && is_ok_dcomp
-            valid_combinations(end+1, :) = [theta, alpha];
+        for alpha = set2
+            % All calculations from your original loop are preserved here.
+            %lower arm rotaion
+            Lx = n + (l.*cosd(theta)) - ((y1 - hr).*sind(theta));
+            Ly = hr + (l.*sind(theta)) + ((y1 - hr).*cosd(theta));
+
+            %upper arm rotation
+            Ux = m + (u.*cosd(alpha)) - ((y2 - sumh).*sind(alpha));
+            Uy = sumh + (u.*sind(alpha)) + ((y2 - sumh).*cosd(alpha));
+
+            %damper base rotation
+            dx = n + ((l - od).*cosd(theta)) - ((y1 - hr).*sind(theta)); %x rotation
+            dy = hr + ((l - od).*sind(theta)) + ((y1 - hr).*cosd(theta)); %y rotation
+
+            dxf = (n + l - od) + (d.*(sind(thetad)));
+            dyf = y1 + (d.*(cosd(thetad)));
+
+            %rotaion limitations
+            distLim = sqrt((Lx - Ux).^2 + (Ly - Uy).^2);
+            dcomp = sqrt(((dxf - dx).^2) + ((dyf - dy).^2));
+
+            dist_error = abs(distLim - deltay);
+            
+            % We find the alpha that gives the minimum distance error.
+            if dist_error < min_dist_error
+                min_dist_error = dist_error;
+                best_alpha = alpha;
+            end
         end
+        
+        % After checking all alphas, we save the one that had the smallest error.
+        % This guarantees we get exactly one alpha for each of the 16 thetas.
+        
+        % <<< YOUR FURTHER CALCULATION USING 'theta' AND 'best_alpha' WOULD GO HERE >>>
+        
+        valid_combinations(end+1, :) = [theta, best_alpha];
     end
     
-    if ~isempty(valid_combinations)
-        num_valid = size(valid_combinations, 1);
-        original_values = repmat([m, n, l, u, hr, sumh, y1, y2], num_valid, 1);
-        result_row = [original_values, valid_combinations];
-        all_results{end+1} = result_row;
+    % START of requested debugging block for row 6
+    if row_idx == 6
+        disp('--- Debugging Info for Row 6 ---');
+
+        % --- Values at theta 0 ---
+        theta_0 = 0;
+        % Find the best_alpha for theta=0 from the results
+        alpha_at_0 = valid_combinations(valid_combinations(:,1) == theta_0, 2);
+        
+        % Recalculate values for theta=0 and its best_alpha
+        Lx_0 = n + (l.*cosd(theta_0)) - ((y1-hr).*sind(theta_0));
+        Ly_0 = hr + (l.*sind(theta_0)) + ((y1-hr).*cosd(theta_0));
+        Ux_0 = m + (u.*cosd(alpha_at_0)) - ((y2-sumh).*sind(alpha_at_0));
+        Uy_0 = sumh + (u.*sind(alpha_at_0)) + ((y2-sumh).*cosd(alpha_at_0));
+        distLim_0 = sqrt((Lx_0 - Ux_0).^2 + (Ly_0 - Uy_0).^2);
+        
+        dx_0 = n + ((l - od).*cosd(theta_0)) - ((y1-hr).*sind(theta_0));
+        dy_0 = hr + ((l - od).*sind(theta_0)) + ((y1-hr).*cosd(theta_0));
+        dxf_0 = (n + l - od) + (d.*(sind(thetad)));
+        dyf_0 = y1 + (d.*(cosd(thetad)));
+        decomp_0 = sqrt(((dxf_0 - dx_0).^2) + ((dyf_0 - dy_0).^2));
+        
+        fprintf('distLim at theta 0: %f\n', distLim_0);
+        fprintf('decomp at theta 0: %f\n', decomp_0);
+        
+        % --- distLim at theta 10 ---
+        theta_10 = 10;
+        % Find the best_alpha for theta=10 from the results
+        alpha_at_10 = valid_combinations(valid_combinations(:,1) == theta_10, 2);
+        
+        % Recalculate distLim for theta=10 and its best_alpha
+        Lx_10 = n + (l.*cosd(theta_10)) - ((y1-hr).*sind(theta_10));
+        Ly_10 = hr + (l.*sind(theta_10)) + ((y1-hr).*cosd(theta_10));
+        Ux_10 = m + (u.*cosd(alpha_at_10)) - ((y2-sumh).*sind(alpha_at_10));
+        Uy_10 = sumh + (u.*sind(alpha_at_10)) + ((y2-sumh).*cosd(alpha_at_10));
+        distLim_10 = sqrt((Lx_10 - Ux_10).^2 + (Ly_10 - Uy_10).^2);
+        fprintf('distLim at theta 10: %f\n', distLim_10);
+        
+        % --- decomp at theta 15 and best_alpha for that row ---
+        theta_15 = 15;
+        % Find the best_alpha for theta=15 from the results
+        alpha_at_15 = valid_combinations(valid_combinations(:,1) == theta_15, 2);
+        
+        % Recalculate decomp for theta=15
+        dx_15 = n + ((l - od).*cosd(theta_15)) - ((y1-hr).*sind(theta_15));
+        dy_15 = hr + ((l - od).*sind(theta_15)) + ((y1-hr).*cosd(theta_15));
+        dxf_15 = (n + l - od) + (d.*(sind(thetad)));
+        dyf_15 = y1 + (d.*(cosd(thetad)));
+        decomp_15 = sqrt(((dxf_15 - dx_15).^2) + ((dyf_15 - dy_15).^2));
+        fprintf('decomp at theta 15 is: %f, with best_alpha: %f\n', decomp_15, alpha_at_15);
+        
+        disp('--- End of Debugging Info ---');
+    end
+    % END of requested debugging block
+    
+    if size(valid_combinations, 1) == 16
+        thetas = valid_combinations(:, 1)'; % Transpose to a 1x16 row vector
+        alphas = valid_combinations(:, 2)'; % Transpose to a 1x16 row vector
+        constants_row = [m, n, l_length, u_length, hr, sumh, y1, y2];
+        output_row = [constants_row, thetas, alphas];
+        
+        % Append the data row to the CSV using an Octave-compatible function
+        dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    else
+        fprintf('Warning: Did not find 16 valid combinations for input row %d. Skipping output for this row.\n', row_idx);
     end
 
 end
-
-final_matrix = cat(1, all_results{:});
-
-headers = {'m', 'n', 'l', 'u', 'hr', 'sumh', 'y1', 'y2', 'valid_theta', 'valid_alpha'};
-
-fid = fopen('c_gain_rear.csv', 'w');
-if fid == -1
-    error('Cannot open file for writing.');
-end
-
-header_line = strjoin(headers, ',');
-fprintf(fid, '%s\n', header_line);
-
-if ~isempty(final_matrix)
-    writematrix(final_matrix, 'c_gain_rear.csv', 'WriteMode', 'append');
-end
-
-fclose(fid);
 
 endtime = toc();
 
