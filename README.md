@@ -55,3 +55,7 @@ estimated time to results, 2 - 3 days of work
 
 22/12
 perhaps slight bug in calculations
+
+23/12 
+merge conflict explained, accidentally deleted previous commit, caused some issues but those hae now been remedied, back to status quo. 
+

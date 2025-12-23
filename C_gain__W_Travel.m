@@ -70,7 +70,7 @@ for row_idx = 1:size(values_data, 1)
     for theta = set1
         best_alpha = NaN;
         min_dist_error = inf;
-        
+
         for alpha = set2
             % All calculations from your original loop are preserved here.
             %lower arm rotaion
@@ -93,39 +93,40 @@ for row_idx = 1:size(values_data, 1)
             dcomp = sqrt(((dxf - dx).^2) + ((dyf - dy).^2));
 
             dist_error = abs(distLim - deltay);
-            
+
             % We find the alpha that gives the minimum distance error.
             if dist_error < min_dist_error
                 min_dist_error = dist_error;
                 best_alpha = alpha;
             end
         end
-        
+
         % After checking all alphas, we save the one that had the smallest error.
         % This guarantees we get exactly one alpha for each of the 16 thetas.
-        
+
         % <<< YOUR FURTHER CALCULATION USING 'theta' AND 'best_alpha' WOULD GO HERE >>>
         
+
         valid_combinations(end+1, :) = [theta, best_alpha];
     end
-    
+
     % Determine the expected number of columns for thetas and alphas from 'sweep'
     num_expected = sweep + 1;
-    
+
     % Initialize theta and alpha arrays with zeros, which will be used for padding
     thetas = zeros(1, num_expected);
     alphas = zeros(1, num_expected);
-    
+
     num_combinations = size(valid_combinations, 1);
 
     if num_combinations > 0
         % Get the actual combinations found
         actual_thetas = valid_combinations(:, 1)';
         actual_alphas = valid_combinations(:, 2)';
-        
+
         % Determine how many values to copy over (handles both padding and truncation)
         len_to_copy = min(num_combinations, num_expected);
-        
+
         thetas(1:len_to_copy) = actual_thetas(1:len_to_copy);
         alphas(1:len_to_copy) = actual_alphas(1:len_to_copy);
 
@@ -133,15 +134,16 @@ for row_idx = 1:size(values_data, 1)
             fprintf('Warning: Found %d valid combinations, but space for only %d. Truncating for input row %d.\n', num_combinations, num_expected, row_idx);
         end
     end
-    
+
     % Construct the full row for the CSV
     constants_row = [m, n, l_length, u_length, hr, sumh, y1, y2];
     output_row = [constants_row, thetas, alphas];
-    
+
     % Append the data row to the CSV, ensuring a consistent number of columns
     dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+
+end
 
 endtime = toc();
 
 disp(['Done, Time taken: ' num2str(endtime) ' seconds.'])
-
