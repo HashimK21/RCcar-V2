@@ -9,10 +9,10 @@ tireW = 42; %tire width
 y1 = 16; %ground to lower sus mount
 xj = (tw/2) - (tireW/2) - 6; %position of upper and lower joints x, offset to allow bolt to be outside of wheel
 
-set1 = 50:1:60; %range of values for m, upper chassis beam
-set2 = 50:1:70; %range of values for n, lower chassis beam
+set1 = 25:1:40; %range of values for m, upper chassis beam
+set2 = 25:1:40; %range of values for n, lower chassis beam
 set3 = 16:1:18; %range of values for hr
-set4 = 50:2:80; %range of values for hf
+set4 = 40:2:80; %range of values for hf
 set5 = 10:2:20; %range of values for y2 offset from wheel top
 
 

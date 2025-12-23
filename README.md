@@ -59,3 +59,4 @@ perhaps slight bug in calculations
 23/12 
 merge conflict explained, accidentally deleted previous commit, caused some issues but those hae now been remedied, back to status quo. 
 
+- rear values looking good, a little more filter to narrow down choice. moving on to front. need to calculate max travel.
