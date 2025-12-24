@@ -60,3 +60,8 @@ perhaps slight bug in calculations
 merge conflict explained, accidentally deleted previous commit, caused some issues but those hae now been remedied, back to status quo. 
 
 - rear values looking good, a little more filter to narrow down choice. moving on to front. need to calculate max travel.
+
+24/12 
+
+do not commit until checked steering2.m 
+changed angle conversion using standard method of 90 - angle (pi - angle, for radians) this may yeild expected results, issues possibly because of inccorect translation in to vertical reference, if incorrect, other issues persit but the convention should be more robust, apparently i've just been silly for the past month in missing this maths error. - did not work

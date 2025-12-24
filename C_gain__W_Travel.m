@@ -139,12 +139,19 @@ for row_idx = 1:size(values_data, 1)
         Ux = m + (u.*cosd(best_alpha)) - ((y2 - sumh).*sind(best_alpha));
         Uy = sumh + (u.*sind(best_alpha)) + ((y2 - sumh).*cosd(best_alpha));
         
-        grad1 = (Ly - Uy);
-        grad2 = (Lx - Ux);
+        grad1 = (Uy - Ly);
+        grad2 = (Ux - Lx);
         camber_fac90 = atan2d(grad1, grad2);
-        camber = camber_fac90 + 90;
-
+        camber = 90 - camber_fac90;
+ 
         valid_combinations(end+1, :) = [best_alpha, camber, dcomp];
+
+    end
+
+    theta_15_index = sweep + 1; % coresponds to theta = 15
+    camber_at_15 = valid_combinations(theta_15_index, 2);
+    if abs(camber_at_15) > 2.9
+        continue; % Skip this entire data row if condition not met
     end
 
     % Determine the expected number of columns for thetas and alphas from 'sweep'
@@ -181,6 +188,7 @@ for row_idx = 1:size(values_data, 1)
 
     % Append the data row to the CSV, ensuring a consistent number of columns
     dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    %dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
 
 end
 
