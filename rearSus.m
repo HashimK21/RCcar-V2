@@ -6,25 +6,24 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 tireW = 42; %tire width
-y1 = 16; %ground to lower sus mount
-xj = (tw/2) - (tireW/2) - 6; %position of upper and lower joints x, offset to allow bolt to be outside of wheel
+y1 = 19; %ground to lower sus mount
+xj = (tw/2) - (tireW/2); %position of upper and lower joints x, offset to allow bolt to be outside of wheel
 
 set1 = 25:1:40; %range of values for m, upper chassis beam
 set2 = 25:1:40; %range of values for n, lower chassis beam
-set3 = 16:1:18; %range of values for hr
-set4 = 40:2:80; %range of values for hf
-set5 = 10:2:20; %range of values for y2 offset from wheel top
+set3 = 40:2:80; %range of values for hf
+set4 = 15:2:20; %range of values for y2 offset from wheel top
 
 
-[set1, set2, set3, set4, set5] = ndgrid(set1, set2, set3, set4, set5);
-combinations = [set1(:), set2(:), set3(:), set4(:), set5(:)];
+[set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
+combinations = [set1(:), set2(:), set3(:), set4(:)];
 
 m = set1(:);
 n = set2(:);
-hr = set3(:);
-hf = set4(:);
+hr = 20;
+hf = set3(:);
 sumh = hr + hf;
-y2 = tireD - set5(:); %ground to upper sus mount
+y2 = tireD - set4(:); %ground to upper sus mount
 
 %IC location
 xLnum = (hr.*(xj - n).*(xj - m)) - (n.*(y1 - hr).*(xj - m)) - (sumh.*(xj - n).*(xj - m)) + (m.*(y2 - sumh).*(xj - n));
@@ -60,18 +59,18 @@ l = (xj - n)./cosd(alpha);
 clearance = 7; %for material and design
 batteryHeight = 35/2; %half of battery height
 CGheight = hr + clearance + batteryHeight;
-CGpCent_low = (CGheight*0.2);
-CGpCent_high = (CGheight*0.205);
+CGpCent_low = (CGheight*0.15);
+CGpCent_high = (CGheight*0.2);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
              & (abs(xRC) >= 0) & (yRC >= CGpCent_low) & (yRC <= CGpCent_high) ...
-             & (xL >= (tw*0.85)) & (xL <= (tw*1.5)) & (alpha < 2) & (thetau < 9);
+             & (xL >= (tw)) & (xL <= (tw*1.2)) & (l > u);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
 s_m = m(index_sort);
 s_n = n(index_sort);
-s_hr = hr(index_sort);
+s_hr = (hr * ones(size(s_yRC)));
 s_hf = hf(index_sort);
 s_sumh = sumh(index_sort);
 s_y2 = y2(index_sort);

@@ -10,7 +10,7 @@ values_data = dlmread('rear_data.csv', ',', 2, 0);
 sweep = 15;
 
 % Generate headers for the final format
-constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Upper arm length', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2'};
+constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Lower arm angle', 'Upper arm length', 'Upper arm angle', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2'};
 dynamic_headers = {};
 for i = 0:sweep
     dynamic_headers{end+1} = ['alpha @ theta_', num2str(i)];
@@ -150,7 +150,11 @@ for row_idx = 1:size(values_data, 1)
 
     theta_15_index = sweep + 1; % coresponds to theta = 15
     camber_at_15 = valid_combinations(theta_15_index, 2);
-    if abs(camber_at_15) > 2.9
+    dcomp_at_15 = valid_combinations(theta_15_index, 3);
+
+    cond_acceptable = (abs(camber_at_15) <= 2.9) & (abs(camber_at_15) >= 2.6) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) < 0.3);
+    
+    if ~cond_acceptable
         continue; % Skip this entire data row if condition not met
     end
 
@@ -183,7 +187,7 @@ for row_idx = 1:size(values_data, 1)
     end
 
     % Construct the full row for the CSV
-    constants_row = [m, n, l_length, u_length, hr, sumh, y1, y2];
+    constants_row = [m, n, l_length, l_angle, u_length, u_angle, hr, sumh, y1, y2];
     output_row = [constants_row, alphas, camber_vals, test_vals];
 
     % Append the data row to the CSV, ensuring a consistent number of columns
