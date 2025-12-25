@@ -4,8 +4,8 @@ clc
 tic();
 
 %pull values from csv
-values_data = dlmread('rear_data.csv', ',', 2, 0);
-%values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
+%values_data = dlmread('rear_data.csv', ',', 2, 0);
+values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
 
 sweep = 15;
 
@@ -25,13 +25,19 @@ headers = [constant_headers, dynamic_headers];
 header_line = strjoin(headers, ',');
 
 % Write headers to a clean file
-fid = fopen('c_gain_rear.csv', 'w');
+% fid = fopen('c_gain_rear.csv', 'w');
+% if fid == -1
+%     error('Cannot open file for writing.');
+% end
+% fprintf(fid, '%s\n', header_line);
+% fclose(fid);
+
+fid = fopen('c_gain_front.csv', 'w');
 if fid == -1
     error('Cannot open file for writing.');
 end
 fprintf(fid, '%s\n', header_line);
 fclose(fid);
-
 
 for row_idx = 1:size(values_data, 1)
     values = values_data(row_idx, :);
@@ -150,9 +156,11 @@ for row_idx = 1:size(values_data, 1)
 
     theta_15_index = sweep + 1; % coresponds to theta = 15
     camber_at_15 = valid_combinations(theta_15_index, 2);
+    camber_at_0 = valid_combinations(1, 2);
     dcomp_at_15 = valid_combinations(theta_15_index, 3);
-
-    cond_acceptable = (abs(camber_at_15) <= 2.9) & (abs(camber_at_15) >= 2.6) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) < 0.3);
+    c_gain = abs(camber_at_15) - abs(camber_at_0);
+    
+    cond_acceptable = (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) < 0.5) & (c_gain < 2.9);
     
     if ~cond_acceptable
         continue; % Skip this entire data row if condition not met
@@ -191,8 +199,8 @@ for row_idx = 1:size(values_data, 1)
     output_row = [constants_row, alphas, camber_vals, test_vals];
 
     % Append the data row to the CSV, ensuring a consistent number of columns
-    dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
-    %dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
+    %dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
 
 end
 

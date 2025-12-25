@@ -67,3 +67,7 @@ do not commit until checked steering2.m
 changed angle conversion using standard method of 90 - angle (pi - angle, for radians) this may yeild expected results, issues possibly because of inccorect translation in to vertical reference, if incorrect, other issues persit but the convention should be more robust, apparently i've just been silly for the past month in missing this maths error. - did not work
 
 ride height increase to 20mm (hr) 
+
+NOTE: front camber reported as -9.5 degrees this is due to king pin axis as it is used to determine camber gain. the gain across travel is acceptable
+
+only need to print vertical wheel travel to csv
