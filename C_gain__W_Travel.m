@@ -160,7 +160,7 @@ for row_idx = 1:size(values_data, 1)
     dcomp_at_15 = valid_combinations(theta_15_index, 3);
     c_gain = abs(camber_at_15) - abs(camber_at_0);
     
-    cond_acceptable = (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) < 0.5) & (c_gain < 2.9);
+    cond_acceptable =  (c_gain < 2.5) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) > 0.1) & (abs(dcomp - dcompFull) <= 0.6);
     
     if ~cond_acceptable
         continue; % Skip this entire data row if condition not met

@@ -77,7 +77,7 @@ CGpCent_high = (CGheight*0.4);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
              & (abs(xRC) >= 0) & (yRC >= CGpCent_low) & (yRC <= CGpCent_high) ...
-             & (xL >= (tw*0.85)) & (xL <= (tw*2)) & (l > u);
+             & (xL >= (tw*0.85)) & (xL <= (tw*2)) & (low > up);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
