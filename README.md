@@ -41,6 +41,36 @@ current behaviour, outer wheel behaves predictably in most cases, large jumps bu
 
 15/12
 
-mixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
+fixed most issues now back to early peak, this can maybe be solved with computing t for full servo lock angles and setting checking if configurations meet all 3 poses
 
 potentially try zr, cz +
+
+
+
+Suspension notes:
+- front sus and rear sus codes produce expected results, bug seen in CarV1 is present, can be debugged but isnt damaging to results given. 
+- potentially move calculations into for loop to make filtering more simple
+
+estimated time to results, 2 - 3 days of work
+
+22/12
+perhaps slight bug in calculations
+
+23/12 
+merge conflict explained, accidentally deleted previous commit, caused some issues but those hae now been remedied, back to status quo. 
+
+- rear values looking good, a little more filter to narrow down choice. moving on to front. need to calculate max travel.
+
+24/12 
+
+do not commit until checked steering2.m 
+changed angle conversion using standard method of 90 - angle (pi - angle, for radians) this may yeild expected results, issues possibly because of inccorect translation in to vertical reference, if incorrect, other issues persit but the convention should be more robust, apparently i've just been silly for the past month in missing this maths error. - did not work
+
+ride height increase to 20mm (hr) 
+
+NOTE: front camber reported as -9.5 degrees this is due to king pin axis as it is used to determine camber gain. the gain across travel is acceptable
+
+only need to print vertical wheel travel to csv and other useful information, like roll centre height and other key suspension details
+
+front_data.csv, row 59
+rear_data.csv, row 40
