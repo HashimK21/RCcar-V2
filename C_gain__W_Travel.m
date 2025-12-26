@@ -4,13 +4,13 @@ clc
 tic();
 
 %pull values from csv
-%values_data = dlmread('rear_data.csv', ',', 2, 0);
-values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
+values_data = dlmread('rear_data.csv', ',', 2, 0);
+%values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
 
 sweep = 15;
 
 % Generate headers for the final format
-constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Lower arm angle', 'Upper arm length', 'Upper arm angle', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2'};
+constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Lower arm angle', 'Upper arm length', 'Upper arm angle', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2', 'WheelTravel'};
 dynamic_headers = {};
 for i = 0:sweep
     dynamic_headers{end+1} = ['alpha @ theta_', num2str(i)];
@@ -24,20 +24,20 @@ end
 headers = [constant_headers, dynamic_headers];
 header_line = strjoin(headers, ',');
 
-% Write headers to a clean file
-% fid = fopen('c_gain_rear.csv', 'w');
-% if fid == -1
-%     error('Cannot open file for writing.');
-% end
-% fprintf(fid, '%s\n', header_line);
-% fclose(fid);
-
-fid = fopen('c_gain_front.csv', 'w');
+%Write headers to a clean file
+fid = fopen('c_gain_rear.csv', 'w');
 if fid == -1
     error('Cannot open file for writing.');
 end
 fprintf(fid, '%s\n', header_line);
 fclose(fid);
+
+% fid = fopen('c_gain_front.csv', 'w');
+% if fid == -1
+%     error('Cannot open file for writing.');
+% end
+% fprintf(fid, '%s\n', header_line);
+% fclose(fid);
 
 for row_idx = 1:size(values_data, 1)
     values = values_data(row_idx, :);
@@ -159,8 +159,14 @@ for row_idx = 1:size(values_data, 1)
     camber_at_0 = valid_combinations(1, 2);
     dcomp_at_15 = valid_combinations(theta_15_index, 3);
     c_gain = abs(camber_at_15) - abs(camber_at_0);
-    
-    cond_acceptable =  (c_gain < 2.5) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) > 0.1) & (abs(dcomp - dcompFull) <= 0.6);
+    best_alpha_15 = valid_combinations(theta_15_index, 1);
+    best_alpha_0 = valid_combinations(1, 1);
+
+    Uy_0 = sumh + (u.*sind(best_alpha_0)) + ((y2 - sumh).*cosd(best_alpha_0));
+    Uy_15 = sumh + (u.*sind(best_alpha_15)) + ((y2 - sumh).*cosd(best_alpha_15));
+    WheelTravel = Uy_15 - Uy_0;
+
+    cond_acceptable =  (c_gain < 2.9) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) > 0.1) & (abs(dcomp - dcompFull) <= 0.4) & ((sweep - best_alpha_15) < 0.1);
     
     if ~cond_acceptable
         continue; % Skip this entire data row if condition not met
@@ -195,12 +201,12 @@ for row_idx = 1:size(values_data, 1)
     end
 
     % Construct the full row for the CSV
-    constants_row = [m, n, l_length, l_angle, u_length, u_angle, hr, sumh, y1, y2];
+    constants_row = [m, n, l_length, l_angle, u_length, u_angle, hr, sumh, y1, y2, WheelTravel];
     output_row = [constants_row, alphas, camber_vals, test_vals];
 
     % Append the data row to the CSV, ensuring a consistent number of columns
-    %dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
-    dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
+    dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    %dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
 
 end
 
