@@ -71,3 +71,6 @@ ride height increase to 20mm (hr)
 NOTE: front camber reported as -9.5 degrees this is due to king pin axis as it is used to determine camber gain. the gain across travel is acceptable
 
 only need to print vertical wheel travel to csv and other useful information, like roll centre height and other key suspension details
+
+front_data.csv, row 59
+rear_data.csv, row 40
