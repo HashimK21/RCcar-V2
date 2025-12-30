@@ -4,10 +4,10 @@ clc
 tic();
 
 %pull values from csv
-values_data = dlmread('rear_data.csv', ',', 2, 0);
-%values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
+%values_data = dlmread('rear_data.csv', ',', 2, 0);
+values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
 
-sweep = 15;
+sweep = 10;
 
 % Generate headers for the final format
 constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Lower arm angle', 'Upper arm length', 'Upper arm angle', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2', 'WheelTravel'};
@@ -25,19 +25,19 @@ headers = [constant_headers, dynamic_headers];
 header_line = strjoin(headers, ',');
 
 %Write headers to a clean file
-fid = fopen('c_gain_rear.csv', 'w');
-if fid == -1
-    error('Cannot open file for writing.');
-end
-fprintf(fid, '%s\n', header_line);
-fclose(fid);
-
-% fid = fopen('c_gain_front.csv', 'w');
+% fid = fopen('c_gain_rear.csv', 'w');
 % if fid == -1
 %     error('Cannot open file for writing.');
 % end
 % fprintf(fid, '%s\n', header_line);
 % fclose(fid);
+
+fid = fopen('c_gain_front.csv', 'w');
+if fid == -1
+    error('Cannot open file for writing.');
+end
+fprintf(fid, '%s\n', header_line);
+fclose(fid);
 
 for row_idx = 1:size(values_data, 1)
     values = values_data(row_idx, :);
@@ -62,13 +62,13 @@ for row_idx = 1:size(values_data, 1)
 
     deltay = y2 - y1;
 
-    %od = 40; %for front
-    od = 10; %for rear
+    od = 20; %for front
+    %od = 10; %for rear
 
-    d = 103; %damper length
-    dcompFull = 90; %length of fully compressed damper
+    d = 90; %damper length
+    dcompFull = 80; %length of fully compressed damper
 
-    thetad = 95; %angle of damper anticlockwise from x axis
+    thetad = 110; %angle of damper anticlockwise from x axis
 
     %set theta and alpha (angles for arm rotation)
     set1 = 0:1:sweep;
@@ -107,8 +107,8 @@ for row_idx = 1:size(values_data, 1)
         if ~isnan(initial_alpha)
             % Define the function to solve: we want distLim - deltay = 0
             dist_func = @(alpha) sqrt(...
-                (Lx - (m + u*cosd(alpha) - (y2-sumh)*sind(alpha))).^2 + ...
-                (Ly - (sumh + u*sind(alpha) + (y2-sumh)*cosd(alpha))).^2 ...
+                (Lx - (m + u*cosd(alpha) - (y2 - sumh)*sind(alpha))).^2 + ...
+                (Ly - (sumh + u*sind(alpha) + (y2 - sumh)*cosd(alpha))).^2 ...
             ) - deltay;
 
             try
@@ -166,7 +166,7 @@ for row_idx = 1:size(values_data, 1)
     Uy_15 = sumh + (u.*sind(best_alpha_15)) + ((y2 - sumh).*cosd(best_alpha_15));
     WheelTravel = Uy_15 - Uy_0;
 
-    cond_acceptable =  (c_gain < 2.9) & (dcompFull < dcomp_at_15) & (abs(dcomp - dcompFull) > 0.1) & (abs(dcomp - dcompFull) <= 0.4) & ((sweep - best_alpha_15) < 0.1);
+    cond_acceptable =  (c_gain < 3) & (dcompFull < dcomp_at_15) & (abs(best_alpha_0) <= 0.5); %& (abs(dcomp - dcompFull) > 0.1) & (abs(dcomp - dcompFull) <= 0.4);
     
     if ~cond_acceptable
         continue; % Skip this entire data row if condition not met
@@ -205,8 +205,8 @@ for row_idx = 1:size(values_data, 1)
     output_row = [constants_row, alphas, camber_vals, test_vals];
 
     % Append the data row to the CSV, ensuring a consistent number of columns
-    dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
-    %dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
+    %dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
 
 end
 

@@ -2,17 +2,17 @@ clc
 
 tic();
 
-set1 = 30:2:45; %range of values for m, upper chassis beam
-set2 = 30:2:45; %range of values for n, lower chassis beam
-set3 = 30:1:60; %range of values for hf
-set4 = 18:2:40; %range of values for deltay
+set1 = 28:1:34; %range of values for m, upper chassis beam
+set2 = 32:1:40; %range of values for n, lower chassis beam
+set3 = 31:1:34; %range of values for hf
+set4 = 37:1:42; %range of values for deltay
 
 [set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
 combinations = [set1(:), set2(:), set3(:), set4(:)];
 
 m = set1(:);
 n = set2(:);
-hr = 20;
+hr = 21;
 hf = set3(:);
 sumh = hr + hf;
 
@@ -24,7 +24,7 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 xj = (tw/2) - (tireW/2);
-y1 = 19;
+y1 = 18.5;
 deltay = set4(:);
 y2 = y1 + deltay;
 c = deltay .* tand(thetak);
@@ -72,12 +72,12 @@ low = (l - n)./cosd(alpha);
 clearance = 7; %for material and design
 batteryHeight = 35/2; %half of battery height
 CGheight = hr + clearance + batteryHeight;
-CGpCent_low = (CGheight*0.17);
-CGpCent_high = (CGheight*0.4);
+CGpCent_low = (CGheight*0.24);
+CGpCent_high = (CGheight*0.3);
 
 index_sort = (l > 0) & (abs(xL + xR) < 0.01) & (abs(xRC)<= 0)...
              & (abs(xRC) >= 0) & (yRC >= CGpCent_low) & (yRC <= CGpCent_high) ...
-             & (xL >= (tw*0.85)) & (xL <= (tw*2)) & (low > up);
+             & (xL >= (tw*0.80)) & (xL <= (tw*3)) & (low > up);
 
 s_yRC = yRC(index_sort);
 s_xRC = xRC(index_sort);
