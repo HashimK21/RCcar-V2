@@ -14,7 +14,7 @@ rs = values_data(20);
 
 %-- Create ndgrid of variables --
 set1 = 20:1:40; %values for rack offset from front axel, zr
-set2 = 60:1:80; %values for r/2
+set2 = 60:1:90; %values for r/2
 set3 = 12:1:16; %steering arm offset from pivot
 set4 = 0:1:10; %differing of size
 

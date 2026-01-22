@@ -62,7 +62,7 @@ for row_idx = 1:size(values_data, 1)
 
     deltay = y2 - y1;
 
-    od = 20; %for front
+    od = 35; %for front
     %od = 10; %for rear
 
     d = 90; %damper length
