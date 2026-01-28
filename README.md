@@ -72,5 +72,11 @@ NOTE: front camber reported as -9.5 degrees this is due to king pin axis as it i
 
 only need to print vertical wheel travel to csv and other useful information, like roll centre height and other key suspension details
 
-front_data.csv, row 5
-rear_data.csv, row 40
+front_data.csv, row 5; c_gain, row 1
+rear_data.csv, row 40; c_gain, row 1
+
+
+28/01 - redeign to fix pacakging issues
+
+front_data.csv, row 30; c_gain, row 8
+rear_data.csv, row 1; c_gain, row 1

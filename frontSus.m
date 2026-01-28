@@ -12,7 +12,7 @@ combinations = [set1(:), set2(:), set3(:), set4(:)];
 
 m = set1(:);
 n = set2(:);
-hr = 21;
+hr = 23;
 hf = set3(:);
 sumh = hr + hf;
 
@@ -24,7 +24,7 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 xj = (tw/2) - (tireW/2);
-y1 = 18.5;
+y1 = 20.5;
 deltay = set4(:);
 y2 = y1 + deltay;
 c = deltay .* tand(thetak);
