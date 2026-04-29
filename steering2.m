@@ -5,14 +5,19 @@ tw = 220; %track width
 wb = 352; %wheelbase
 tireD = 85; %tire diamater
 tireW = 34; %tire width
-k = -6.93; %offset for KPI mid point projection
-rs = 4.97; %scrub radius
+
+
+%pull Values from finalised front sus
+values_data = dlmread('front_data.csv', ',', 2, 0)(59, :);
+k = values_data(21);
+rs = values_data(20);
+KPL = values_data(19);
 
 %-- Create ndgrid of variables --
-set1 = 20:1:40; %values for rack offset from front axel, zr
-set2 = 60:1:80; %values for r/2
-set3 = 8:1:12; %steering arm offset from pivot
-set4 = 3:1:5; %differing of size
+set1 = 10:1:40; %values for rack offset from front axel, zr
+set2 = 50:1:90; %values for r/2
+set3 = 16:1:20; %steering arm offset from pivot
+set4 = -5:1:10; %differing of size
 
 
 [set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
@@ -33,11 +38,11 @@ num_val = 6; %number of ndgrid variables + constants that are output before angl
 output_pos = zeros(num_cases, num_val + num_theta);
 output_neg = zeros(num_cases, num_val + num_theta);
 
-disp('created ndgrid and output matrix')
+disp('Created ndgrid and Output Matrix')
 
 h = 30; 
-xj = (tw/2) - (tireW/2); 
-xp = xj - k; 
+xj = (tw/2) - (tireW/2) + KPL;
+xp = xj - (k./2); 
 zp = 0;
 
 tic();
@@ -54,7 +59,7 @@ for i = 1:numel(set1)
     %calculating tie rod length, t
     tx = (xp + cx - rO2)^2;
     tz = (zp + cz - zr)^2;
-    t = (sqrt(tx + tz)) .* 1.02;
+    t = (sqrt(tx + tz));
 
     thetaWheel_vals_pos = zeros(1, num_theta);
     thetaWheel_vals_neg = zeros(1, num_theta);
@@ -122,7 +127,7 @@ for i = 1:numel(set1)
 end
 
 end_time = toc();
-disp(['finished calculations in time:' num2str(end_time) ' seconds']);
+disp(['Finished calculations in time:' num2str(end_time) ' seconds']);
 
 % -- Purge bad rows --
 %location of thetaS = 0
@@ -134,13 +139,13 @@ midpoint = ceil(num_theta / 2);
 
 %First pass variables
 max_upper_lim = 0.1;
-min_lock = 0;
+min_lock = 20;
 %Second pass variables
-max_jump = 10000;
-tollerance = 10000;
+max_jump = 10;
+tollerance = 0.1;
 %Third pass variables
-ackLimLow = 0; %min ackermann percentage
-ackLimHigh = 100; %max ackermann percentage
+ackLimLow = 80; %min ackermann percentage
+ackLimHigh = 110; %max ackermann percentage
 TurningCircleLim = 300; %min turning circle diameter in mm
 
 

@@ -6,13 +6,13 @@ tw = 220; %track width
 wb = 352; %wheel base
 tireD = 85; %tire diamater
 tireW = 42; %tire width
-y1 = 19; %ground to lower sus mount
+y1 = 21; %ground to lower sus mount
 xj = (tw/2) - (tireW/2); %position of upper and lower joints x, offset to allow bolt to be outside of wheel
 
 set1 = 25:1:40; %range of values for m, upper chassis beam
 set2 = 25:1:40; %range of values for n, lower chassis beam
-set3 = 40:2:80; %range of values for hf
-set4 = 15:2:20; %range of values for y2 offset from wheel top
+set3 = 37:1:42; %range of values for hf
+set4 = 20:1:30; %range of values for y2 offset from wheel top
 
 
 [set1, set2, set3, set4] = ndgrid(set1, set2, set3, set4);
@@ -20,7 +20,7 @@ combinations = [set1(:), set2(:), set3(:), set4(:)];
 
 m = set1(:);
 n = set2(:);
-hr = 20;
+hr = 22;
 hf = set3(:);
 sumh = hr + hf;
 y2 = tireD - set4(:); %ground to upper sus mount
