@@ -4,8 +4,8 @@ clc
 tic();
 
 %pull values from csv
-values_data = dlmread('rear_data.csv', ',', 2, 0);
-%values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
+%values_data = dlmread('rear_data.csv', ',', 2, 0);
+values_data = dlmread('front_data.csv', ',', 2, 0); %pull values from front
 
 sweep = 10;
 
@@ -25,19 +25,19 @@ headers = [constant_headers, dynamic_headers];
 header_line = strjoin(headers, ',');
 
 %Write headers to a clean file
-fid = fopen('c_gain_rear.csv', 'w');
-if fid == -1
-    error('Cannot open file for writing.');
-end
-fprintf(fid, '%s\n', header_line);
-fclose(fid);
-
-% fid = fopen('c_gain_front.csv', 'w');
+% fid = fopen('c_gain_rear.csv', 'w');
 % if fid == -1
 %     error('Cannot open file for writing.');
 % end
 % fprintf(fid, '%s\n', header_line);
 % fclose(fid);
+
+fid = fopen('c_gain_front.csv', 'w');
+if fid == -1
+    error('Cannot open file for writing.');
+end
+fprintf(fid, '%s\n', header_line);
+fclose(fid);
 
 for row_idx = 1:size(values_data, 1)
     values = values_data(row_idx, :);
@@ -62,10 +62,10 @@ for row_idx = 1:size(values_data, 1)
 
     deltay = y2 - y1;
 
-    %od = 35; %for front
-    od = 10; %for rear
+    od = 35; %for front
+    %od = 10; %for rear
 
-    d = 90; %damper length
+    d = 88; %damper length
     dcompFull = 80; %length of fully compressed damper
 
     thetad = 110; %angle of damper anticlockwise from x axis
@@ -205,8 +205,8 @@ for row_idx = 1:size(values_data, 1)
     output_row = [constants_row, alphas, camber_vals, test_vals];
 
     % Append the data row to the CSV, ensuring a consistent number of columns
-    dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
-    %dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
+    %dlmwrite('c_gain_rear.csv', output_row, '-append', 'delimiter', ',');
+    dlmwrite('c_gain_front.csv', output_row, '-append', 'delimiter', ',');
 
 end
 

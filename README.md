@@ -78,5 +78,10 @@ rear_data.csv, row 40; c_gain, row 1
 
 28/01 - redeign to fix pacakging issues
 
-front_data.csv, row 30; c_gain, row 8
+front_data.csv, row 30; c_gain, row 7
 rear_data.csv, row 1; c_gain, row 1
+
+
+UPDATE:
+
+The four bar linkage problem has proved too sensitve and not possible in the constraints that are currently present. thus it has been decided that a parallel steering system be employed until a working prototype has been constructed. the four bar linkage problem for an ackerman based steering design can be revisted at a later date, or scrapped entirely if gains are deamed "not worth the hassle".
