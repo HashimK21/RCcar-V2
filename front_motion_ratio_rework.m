@@ -27,7 +27,7 @@ u = u_length * cosd(u_angle);
 od = 21;
 d = 90;
 dcompFull = 80;
-thetad = 95;
+thetad = 105;
  
 % Generate headers for the final format
 constant_headers = {'Upper Beam', 'Lower Beam', 'Lower arm length', 'Lower arm angle', 'Upper arm length', 'Upper arm angle', 'Ride', 'Frame_h_from_Ground', 'y1', 'y2', 'WheelTravel'};
